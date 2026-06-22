@@ -26,8 +26,8 @@ Phased build per `plan.md` (Phases 0–11, milestones M0–M6).
 | **0 — Project setup** | M0 | ✅ done |
 | **1 — Theme foundation** | M0 | ✅ done |
 | **2 — Data layer** | M0 | ✅ done |
-| 3 — Simulation core | M0 | ⏳ in progress |
-| 4 — Loop, store, React boundary | M0 | ⬜ todo |
+| **3 — Simulation core** | M0 | ✅ done |
+| 4 — Loop, store, React boundary | M0 | ⏳ next |
 | 5 — Rendering | M1 | ⬜ todo |
 | 6 — HUD chrome | M1 | ⬜ todo |
 | 7 — Screens & flow | M1 | ⬜ todo |
@@ -41,5 +41,6 @@ Phased build per `plan.md` (Phases 0–11, milestones M0–M6).
 - **Phase 0** — Vite + React 18 + TS scaffold; `@ → /src` alias; solution-style tsconfig (`app`/`node` references); `index.html` with Inter + JetBrains Mono and `#060606` board background; scripts `dev`/`build`/`preview`/`typecheck`.
 - **Phase 1** — `src/theme/`: `palette.ts` (color/layout source of truth), `tokens.css` (ED foundation + `--fc-*` semantic layer), `global.css` (resets, JetBrains Mono base, grid utilities, `edpulse`), `icons.tsx` (16 Lucide glyphs as React `<Icon>` + raw `Path2D` strings).
 - **Phase 2** — `src/game/data/`: `resources.ts`, `ages.ts`, `units.ts`, `buildings.ts`, `tech.ts` (12-node DAG), `houses.ts` (12 Houses; Mars fully specified), `players.ts` (8 colors, difficulty tiers, `MatchConfig`). All values mirror the confirmed design frame.
+- **Phase 3** — `src/game/sim/`: `rng.ts` (seeded mulberry32), `map.ts` (tile grid, occupancy/passability, radial starts, auto-scaling size), `entities.ts` (Unit/Building/ResourceNode + factories), `world.ts` (`createWorld` seeds 2–8 balanced bases), `commands.ts` (single mutation channel: dispatch/apply with cost charging + validation), `snapshot.ts` (World→Snapshot projection), `tick.ts` (10 Hz pipeline + cleanup). The 9 `systems/` are stubbed with final signatures (filled in Phases 8–11). Verified: 600-tick 1v1 + 400-tick 8-player runs, deterministic by seed, commands apply correctly.
 
 _Each phase ends green on `npm run typecheck` + `npm run build`._
