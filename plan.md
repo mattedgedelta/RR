@@ -186,4 +186,50 @@ Build strictly top-to-bottom. Each **Phase** ends with a runnable/typechecked ch
 5. **Non-determinism leaks** → seeded RNG only, integer tick clock, id-ordered iteration.
 6. **Scope creep (12 houses / 4 ages / navy)** → everything data-driven in `game/data`; MVP ships Mars + 3 unit types + shown buildings; rest are table rows. Water/navy deferred.
 7. **Scaling to 8 players (up to ~600 units)** → spatial hash for proximity queries, budgeted + cached pathfinding, separation (not A*) for crowding, **staggered AI thinking** across players, per-player fog at low cadence; pop cap (≤75/player) bounds totals. Profile from M4 onward; if needed, lower sim Hz or cap concurrent path requests.
+
+---
+
+## 7. Build orchestration — model & effort per phase
+
+**Principles (how to spend tokens):**
+1. **Strong model only on contracts + algorithms that propagate.** The sim core (types/world/commands/snapshot/tick), the store/loop re-render boundary, A* pathfinding, and the multi-AI are the seams everything else depends on — a bug here cascades. Get them right once with Opus; everything downstream then conforms cheaply.
+2. **Leaf work = cheapest capable model, fanned out in parallel.** UI chrome, data tables, render layers, theme — each conforms to a fixed contract, so build them concurrently on Sonnet/Haiku.
+3. **Let the compiler verify for free.** Gate every phase with `tsc --noEmit` + `vite build` (deterministic, zero model tokens). Reserve model-based adversarial review for what the compiler can't catch: game balance, re-render behavior, AI quality, combat/economy math.
+4. **Match effort to irreversibility.** Low effort where a typecheck catches the mistake; high/xhigh where a subtle logic bug survives compilation.
+
+**Tier legend:** `Haiku·low` boilerplate/transcription (exact source given) · `Sonnet·med` standard React/TS to a contract · `Sonnet·high` non-trivial logic/math · `Opus·high/xhigh` architectural seams + hardest algorithms · `Opus·high (verify)` adversarial review of the critical few.
+
+| Phase (steps) | Nature | Model · effort | Run | Why |
+|---|---|---|---|---|
+| **P0 setup** (1–5) | boilerplate | Haiku · low | solo | config/scaffold; compiler+`dev` gate catches errors |
+| **P1 theme** (6–9) | precision transcription | Haiku · med (icons.tsx → Sonnet · med) | fan-out ×2 | exact hex/SVG fidelity; SVG paths warrant Sonnet |
+| **P2 data** (10) | tables w/ balance judgment | Sonnet · med | fan-out ×2 | values must be internally consistent/playable |
+| **P3 sim core** (11–17) | architectural contract | **Opus · high** | solo | types imported everywhere; highest leverage |
+| **P4 loop/store/hooks** (18–20) | concurrency seam | **Opus · xhigh** | solo | the #1 pitfall (re-render storms); subtle, compiler-invisible |
+| **P5 render** (21–25) | coordinate math + draw | Sonnet · high (Camera/HitTest/MapRenderer); layers Sonnet · med | fan-out ×3 (layers) | transforms/hit-testing bug-prone; layers are independent |
+| **P6 HUD** (26–28) | presentational React | Sonnet · med | fan-out ×3–4 | widgets independent, build vs fixtures; design-fidelity |
+| **P7 screens** (29–32) | composition + lifecycle | Sonnet · med (App wiring → Sonnet · high) | mostly solo | App state machine couples loop lifecycle |
+| **P8 economy** (33–36) | state machine + A* | **pathfinding Opus · high**; movement/economy Sonnet · high | fan-out ×2 | A* + budget/cache is perf-critical at 8-player scale |
+| **P9 build/train** (37–39) | sim logic | Sonnet · high | fan-out ×2 | construction & production are independent modules |
+| **P10 combat/AI/win** (40–43) | hardest gameplay | **AI Opus · xhigh**; combat/win Sonnet · high; integration Opus · high | fan-out then Opus integrate | multi-player, staggered, team-aware AI is the hardest logic |
+| **P11 ages/tech/polish** (44–47) | logic + DAG layout | Sonnet · high (ages/modifiers/tech-DAG); polish Sonnet · med | fan-out ×3 | tech-tree connector layout is the only tricky bit |
+| **Verify pass** | adversarial review | **Opus · high (verify)** | solo | review {sim core, store/loop, pathfinding, AI, combat/win, perf} only |
+
+**Parallelization waves** (gate = `tsc`+`build` between waves):
+- **Wave 0** — P0 (Haiku, solo).
+- **Wave 1** — P1 ∥ P2 (independent leaves).
+- **Wave 2** — P3 (Opus) → P4 (Opus); the sequential spine that defines all contracts.
+- **Wave 3** — fan out P5 ∥ P6 ∥ P7 (Sonnet) — all conform to the P3/P4 + P1/P2 contracts.
+- **Wave 4** — fan out P8/P9/P10/P11 modules (Sonnet · high), with pathfinding + AI on Opus; then **one Opus integration pass** wires the tick pipeline.
+- **Wave 5** — P11 tech-tree UI + polish (Sonnet) + final **Opus adversarial review** of the critical few, then full-match + 8-player perf verification.
+
+**Cost shape:** Opus touches ~10 files (core, store/loop, pathfinding, AI, integration, review); Sonnet/Haiku handle the ~50 leaf files in parallel. This concentrates spend where errors are expensive and keeps the long tail cheap — while the free compiler gate prevents cheap-model drift from reaching later phases.
+
+**Execution mechanism.** Run this as a **Workflow**, one wave per phase, with per-agent `model`/`effort` set from the table above:
+- The **spine** (P0, P3, P4) runs as single sequential agents (no fan-out) — Opus on P3/P4, Haiku on P0.
+- **Fan-out waves** (P1∥P2, P5∥P6∥P7, P8–P11 modules) spawn parallel agents that write disjoint files; use `isolation: "worktree"` only where agents would touch the same files concurrently (mostly they won't, since leaf files are disjoint), otherwise plain parallel agents are cheaper.
+- Between waves, a **gate step** runs `tsc --noEmit` + `vite build`; on failure, re-dispatch only the failing module (cheap), not the whole wave.
+- The **final verify** is an Opus adversarial-review agent scoped to {sim core, store/loop, pathfinding, AI, combat/win, perf}; its findings feed a fix pass before sign-off.
+- The human stays in the loop between waves (read each wave's result, approve the next) rather than running all 5 waves unattended.
+
 ```
