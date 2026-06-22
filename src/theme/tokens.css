@@ -1,0 +1,88 @@
+/**
+ * tokens.css — Edge Delta foundation + Field Console (`--fc-*`) semantic layer.
+ * Mirror of src/theme/palette.ts. Keep the two in sync.
+ */
+:root {
+  /* ── gray ramp ── */
+  --ed-gray-950: #060606;
+  --ed-gray-925: #0a0a0a;
+  --ed-gray-900: #0c0c0c;
+  --ed-gray-850: #0f0f0f;
+  --ed-gray-800: #1f1f1f;
+  --ed-gray-750: #262626;
+  --ed-gray-700: #3a3a3a;
+  --ed-gray-600: #5a5a5a;
+  --ed-gray-500: #7a7a7a;
+  --ed-gray-400: #9b9b9b;
+  --ed-gray-300: #b4b4b4;
+  --ed-gray-200: #d6d6d6;
+  --ed-gray-100: #e6e6e6;
+
+  /* ── green (accent) ── */
+  --ed-green-700: #00a84b;
+  --ed-green-500: #00da63;
+  --ed-green-300: #3de889;
+  --ed-green-faint: #00da6340;
+
+  /* ── azure ── */
+  --ed-azure-700: #005490;
+  --ed-azure-500: #0072be;
+  --ed-azure-300: #3f9bd6;
+
+  /* ── scarlet (error) ── */
+  --ed-scarlet-700: #c63a2c;
+  --ed-scarlet-500: #fe5f4d;
+  --ed-scarlet-300: #ff8576;
+
+  /* ── gold (warn) ── */
+  --ed-gold-700: #b89700;
+  --ed-gold-500: #f1c900;
+  --ed-gold-300: #f7dc4d;
+
+  /* ── radii ── */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+
+  /* ── spacing ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* ── fonts ── */
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ── Field Console semantic layer ── */
+  --fc-board: var(--ed-gray-950);
+  --fc-rail: var(--ed-gray-925);
+  --fc-card: var(--ed-gray-900);
+  --fc-grid: var(--ed-gray-850);
+
+  --fc-border: var(--ed-gray-750);
+  --fc-border-soft: var(--ed-gray-800);
+  --fc-border-active: var(--ed-green-500);
+  --fc-border-faint: var(--ed-green-faint);
+
+  --fc-text: var(--ed-gray-100);
+  --fc-text-2: var(--ed-gray-200);
+  --fc-text-3: var(--ed-gray-300);
+  --fc-text-dim: var(--ed-gray-500);
+  --fc-text-dimmer: var(--ed-gray-600);
+  --fc-text-faint: var(--ed-gray-700);
+
+  --fc-accent: var(--ed-green-500);
+  --fc-warn: var(--ed-gold-500);
+  --fc-error: var(--ed-scarlet-500);
+
+  /* ── resource colors ── */
+  --fc-res-grain: #00da63;
+  --fc-res-helium3: #ff9554;
+  --fc-res-gold: #f1c900;
+  --fc-res-ore: #9b9b9b;
+}

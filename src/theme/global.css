@@ -1,0 +1,94 @@
+/**
+ * global.css — resets, base typography, animations, scrollbar, grid utilities.
+ * Imported once in main.tsx (after tokens.css).
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--fc-board);
+  color: var(--fc-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ── pulse used for active/alert accents ── */
+@keyframes edpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── thin dark scrollbar ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ed-gray-700) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--ed-gray-700);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ed-gray-600);
+}
+
+/* ── grid background utilities (cell sizes per design) ── */
+.fc-grid-26,
+.fc-grid-23,
+.fc-grid-14 {
+  background-image: linear-gradient(to right, var(--fc-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--fc-grid) 1px, transparent 1px);
+}
+.fc-grid-26 {
+  background-size: 26px 26px;
+}
+.fc-grid-23 {
+  background-size: 23px 23px;
+}
+.fc-grid-14 {
+  background-size: 14px 14px;
+}
