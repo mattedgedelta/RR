@@ -50,7 +50,7 @@ const PAN_SPEED = 900
 const EDGE_MARGIN = 24
 
 export class MapRenderer {
-  readonly cam = new Camera()
+  readonly cam: Camera
   private rafId = 0
   private running = false
   private lastFrame = 0
@@ -62,10 +62,13 @@ export class MapRenderer {
     private readonly source: FrameSource,
     private readonly map: GameMap,
     private readonly view: ViewState,
+    /** Share a camera with other widgets (e.g. the minimap); else owns one. */
+    camera?: Camera,
   ) {
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('2D canvas context unavailable')
     this.ctx = ctx
+    this.cam = camera ?? new Camera()
     this.cam.setWorldSize(map.width, map.height)
   }
 
