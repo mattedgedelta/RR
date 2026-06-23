@@ -9,7 +9,7 @@
  * each frame, so selecting never triggers a React re-render.
  */
 import { useEffect, useRef } from 'react'
-import type { GameMap } from '@/game/sim/map'
+import { footprintBuildable, type GameMap } from '@/game/sim/map'
 import type { EntityId } from '@/game/sim/entities'
 import { dispatch } from '@/game/store'
 import { MapRenderer, type FrameSource } from '@/render/MapRenderer'
@@ -72,12 +72,27 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
 
     const onContextMenu = (e: MouseEvent): void => {
       e.preventDefault()
+      if (view.placement) {
+        view.placement = null // right-click cancels placement
+        return
+      }
       if (view.selected.size === 0) return
       const r = canvas.getBoundingClientRect()
       const sx = e.clientX - r.left
       const sy = e.clientY - r.top
       const tile = cam.screenToTile(sx, sy)
-      const hit = new HitTest(source.getSnapshot()).pickAt(cam, sx, sy)
+      const snap = source.getSnapshot()
+      const sel = snap.entities.filter((en) => view.selected.has(en.id))
+      const hasUnit = sel.some((en) => en.etype === 'unit' && en.owner === HUMAN)
+      const building = sel.find((en) => en.etype === 'building' && en.owner === HUMAN)
+
+      // A selected building (no units) → set its rally point.
+      if (!hasUnit && building) {
+        dispatch({ type: 'setRally', player: HUMAN, buildingId: building.id, x: tile.x, y: tile.y })
+        return
+      }
+
+      const hit = new HitTest(snap).pickAt(cam, sx, sy)
       const ids = [...view.selected]
       if (hit?.etype === 'resource') {
         dispatch({ type: 'gather', player: HUMAN, unitIds: ids, nodeId: hit.id })
@@ -90,6 +105,24 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
 
     const onPointerDown = (e: PointerEvent): void => {
       const p = localPt(e)
+      // Placement mode: a valid left-click commits the building.
+      if (e.button === 0 && view.placement) {
+        const t = cam.screenToTile(p.x, p.y)
+        const tx = Math.floor(t.x)
+        const ty = Math.floor(t.y)
+        if (footprintBuildable(map, tx, ty, view.placement.w, view.placement.h)) {
+          dispatch({
+            type: 'build',
+            player: HUMAN,
+            builderIds: [...view.selected],
+            building: view.placement.kind,
+            x: tx,
+            y: ty,
+          })
+          view.placement = null
+        }
+        return
+      }
       canvas.setPointerCapture(e.pointerId)
       if (e.button === 0) {
         drag.current = { x: p.x, y: p.y, moved: false }

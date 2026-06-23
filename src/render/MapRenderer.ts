@@ -10,9 +10,9 @@
  * (the GameLoop satisfies this structurally), so rendering runs at display
  * refresh while the sim ticks at a fixed 10 Hz.
  */
-import { FC } from '@/theme/palette'
+import { FC, TILE } from '@/theme/palette'
 import type { Snapshot } from '@/game/sim/snapshot'
-import type { GameMap } from '@/game/sim/map'
+import { footprintBuildable, type GameMap } from '@/game/sim/map'
 import { Camera } from './Camera'
 import type { DrawLayer, ViewState } from './types'
 import { drawTerrain } from './layers/terrain'
@@ -154,6 +154,25 @@ export class MapRenderer {
     for (const layer of LAYERS) {
       ctx.save()
       layer(lc)
+      ctx.restore()
+    }
+
+    // World-space overlay: the building-placement ghost (camera transform still set).
+    const place = this.view.placement
+    if (place && this.view.mouse.inside) {
+      const t = this.cam.screenToTile(this.view.mouse.x, this.view.mouse.y)
+      const tx = Math.floor(t.x)
+      const ty = Math.floor(t.y)
+      const ok = footprintBuildable(this.map, tx, ty, place.w, place.h)
+      const color = ok ? FC.accent : FC.error
+      ctx.save()
+      ctx.globalAlpha = 0.25
+      ctx.fillStyle = color
+      ctx.fillRect(tx * TILE, ty * TILE, place.w * TILE, place.h * TILE)
+      ctx.globalAlpha = 1
+      ctx.lineWidth = 2 / this.cam.zoom
+      ctx.strokeStyle = color
+      ctx.strokeRect(tx * TILE, ty * TILE, place.w * TILE, place.h * TILE)
       ctx.restore()
     }
 

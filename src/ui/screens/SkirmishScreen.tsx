@@ -18,6 +18,7 @@ import { createViewState, type ViewState } from '@/render/types'
 import type { EntityId } from '@/game/sim/entities'
 import type { MatchConfig } from '@/game/data/players'
 import type { UnitKind } from '@/game/data/units'
+import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
 import { HOUSES } from '@/game/data/houses'
 import { FC, FONT } from '@/theme/palette'
 import { useHotkeys } from '@/ui/hooks/useHotkeys'
@@ -122,6 +123,10 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       }
     } else if (slot.label.startsWith('advance_')) {
       dispatch({ type: 'advanceAge', player: HUMAN })
+    } else if (slot.label.startsWith('build_')) {
+      const kind = slot.label.slice(6) as BuildingKind
+      const fp = BUILDINGS[kind].footprint
+      view.placement = { kind, w: fp.w, h: fp.h } // Viewport commits on a valid click
     } else if (slot.label === 'stop') {
       dispatch({ type: 'stop', player: HUMAN, unitIds: selectedIds })
     }
@@ -132,7 +137,11 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     w: () => runSlot(slots[1]),
     e: () => runSlot(slots[2]),
     r: () => runSlot(slots[3]),
-    escape: () => (selectedIds.length ? clearSelection() : onExit()),
+    escape: () => {
+      if (view.placement) view.placement = null
+      else if (selectedIds.length) clearSelection()
+      else onExit()
+    },
   })
 
   return (

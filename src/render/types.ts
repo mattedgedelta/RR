@@ -11,7 +11,15 @@
 import type { Snapshot } from '@/game/sim/snapshot'
 import type { GameMap } from '@/game/sim/map'
 import type { EntityId } from '@/game/sim/entities'
+import type { BuildingKind } from '@/game/data/buildings'
 import type { Camera } from './Camera'
+
+/** A building being placed: its kind and footprint, drawn as a cursor ghost. */
+export interface PlacementState {
+  kind: BuildingKind
+  w: number
+  h: number
+}
 
 export interface ScreenRect {
   x: number
@@ -32,6 +40,8 @@ export interface ViewState {
   mouse: { x: number; y: number; inside: boolean }
   /** Held pan directions: any of 'up' | 'down' | 'left' | 'right'. */
   panKeys: Set<string>
+  /** Building placement in progress (cursor ghost), or null. */
+  placement: PlacementState | null
 }
 
 export function createViewState(): ViewState {
@@ -41,6 +51,7 @@ export function createViewState(): ViewState {
     dragRect: null,
     mouse: { x: 0, y: 0, inside: false },
     panKeys: new Set(),
+    placement: null,
   }
 }
 
