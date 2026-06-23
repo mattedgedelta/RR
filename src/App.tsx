@@ -1,12 +1,13 @@
-import LoopDebug from '@/ui/debug/LoopDebug'
+import RenderDebug from '@/ui/debug/RenderDebug'
 
 /**
- * App — temporary host for the current build checkpoint. Phase 4 mounts the
- * GameLoop + store debug view (end of M0). Replaced by the `useScreen` state
+ * App — temporary host for the current build checkpoint. Phase 5 mounts the
+ * Viewport + MapRenderer over a live sim (M1). Replaced by the `useScreen` state
  * machine (menu → skirmish-setup → skirmish → result) in Phase 7.
  *
- * The Phase 1 theme swatch lives on at `@/ui/debug/ThemeSwatch`.
+ * Earlier checkpoints live on at `@/ui/debug/ThemeSwatch` (P1) and
+ * `@/ui/debug/LoopDebug` (P4).
  */
 export default function App() {
-  return <LoopDebug />
+  return <RenderDebug />
 }
