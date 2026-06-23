@@ -37,6 +37,7 @@ import {
   type Building,
   type ResourceNode,
 } from './entities'
+import { RateTracker } from './systems/rates'
 
 /** Simulation tick rate. */
 export const TICK_HZ = 10
@@ -73,6 +74,8 @@ export interface Player {
   defeated: boolean
   /** Worker ids detected idle this tick (refreshed by the economy system). */
   idleUnitIds: EntityId[]
+  /** Trailing-window income tracker (per minute), refreshed by economy. */
+  rateTracker: RateTracker
   /** AI handle (null for the human). */
   ai: AiState | null
 }
@@ -180,6 +183,7 @@ export function createWorld(seed: number, config: MatchConfig): World {
     ageProgress: null,
     defeated: false,
     idleUnitIds: [],
+    rateTracker: new RateTracker(),
     ai: p.kind === 'cpu' ? { nextThinkTick: i * 3 } : null,
   }))
 

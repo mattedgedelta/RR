@@ -11,7 +11,6 @@ import type { UnitKind } from '../data/units'
 import type { Cost } from '../data/resources'
 import { AGES } from '../data/ages'
 import { RESOURCE_META, emptyBag } from '../data/resources'
-import { UNITS } from '../data/units'
 import type { EntityType, BuildingState, UnitOrder } from './entities'
 import { type World, TICK_HZ } from './world'
 
@@ -63,6 +62,8 @@ export interface Snapshot {
   pop: number
   popCap: number
   idleCount: number
+  /** Idle worker ids for player 0 (for IdleBadge cycle-select). */
+  idleUnitIds: number[]
   age: AgeId
   ageName: string
   ageIndex: number
@@ -84,6 +85,7 @@ export function emptySnapshot(): Snapshot {
     pop: 0,
     popCap: 0,
     idleCount: 0,
+    idleUnitIds: [],
     age: 'bondsman',
     ageName: AGES.bondsman.name,
     ageIndex: AGES.bondsman.index,
@@ -149,9 +151,7 @@ export function buildSnapshot(world: World): Snapshot {
     })
   }
 
-  let idleCount = 0
   for (const u of world.units.values()) {
-    if (u.owner === 0 && u.order === 'idle' && UNITS[u.kind].canGather) idleCount++
     entities.push({
       id: u.id,
       etype: 'unit',
@@ -189,10 +189,11 @@ export function buildSnapshot(world: World): Snapshot {
     mapW: world.map.width,
     mapH: world.map.height,
     resources: { ...human.resources },
-    rates: emptyBag(),
+    rates: { ...human.rateTracker.perMin },
     pop: human.pop,
     popCap: human.popCap,
-    idleCount,
+    idleCount: human.idleUnitIds.length,
+    idleUnitIds: [...human.idleUnitIds],
     age: human.age,
     ageName: AGES[human.age].name,
     ageIndex: AGES[human.age].index,
