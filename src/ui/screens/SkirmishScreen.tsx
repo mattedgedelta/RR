@@ -21,7 +21,7 @@ import type { UnitKind } from '@/game/data/units'
 import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
 import { HOUSES } from '@/game/data/houses'
 import { FC, FONT } from '@/theme/palette'
-import { useHotkeys } from '@/ui/hooks/useHotkeys'
+import { useHotkeys, type HotkeyMap } from '@/ui/hooks/useHotkeys'
 import Viewport from '@/ui/hud/Viewport'
 import { ResourceBar } from '@/ui/hud/ResourceBar'
 import { IdleBadge } from '@/ui/hud/IdleBadge'
@@ -150,7 +150,23 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     }
   }
 
-  useHotkeys({
+  // Control groups: Ctrl+1..9 assigns the selection, 1..9 reselects it.
+  const groups = useRef(new Map<string, EntityId[]>())
+  const assignGroup = (n: string): void => {
+    groups.current.set(n, [...selectedIds])
+  }
+  const selectGroup = (n: string): void => {
+    const live = (groups.current.get(n) ?? []).filter((id) => snap.entities.some((e) => e.id === id))
+    if (live.length === 0) return
+    view.selected = new Set(live)
+    setSelectedIds(live)
+    const ents = snap.entities.filter((e) => live.includes(e.id))
+    const cx = ents.reduce((s, e) => s + e.x, 0) / ents.length
+    const cy = ents.reduce((s, e) => s + e.y, 0) / ents.length
+    camera.centerOn(cx, cy)
+  }
+
+  const keymap: HotkeyMap = {
     q: () => runSlot(slots[0]),
     w: () => runSlot(slots[1]),
     e: () => runSlot(slots[2]),
@@ -160,7 +176,12 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       else if (selectedIds.length) clearSelection()
       else onExit()
     },
-  })
+  }
+  for (let n = 1; n <= 9; n++) {
+    keymap[String(n)] = () => selectGroup(String(n))
+    keymap[`ctrl+${n}`] = () => assignGroup(String(n))
+  }
+  useHotkeys(keymap)
 
   return (
     <div
