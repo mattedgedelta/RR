@@ -135,8 +135,38 @@ export function commandSlots(
     return slots
   }
 
+  // A selected worker → a build menu of the buildings unlocked at this age.
+  if (ents.some((e) => e.etype === 'unit' && UNITS[e.kind as UnitKind].canGather)) {
+    let i = 0
+    for (const kind of BUILD_MENU) {
+      if (i >= 7) break
+      if (!ageAtLeast(age, BUILDINGS[kind].requiredAge)) continue
+      slots[i] = {
+        hotkey: SLOT_KEYS[i],
+        label: `build_${kind}`,
+        icon: 'hammer',
+        cost: BUILDINGS[kind].cost,
+      }
+      i++
+    }
+    slots[7] = { hotkey: SLOT_KEYS[7], label: 'stop', icon: 'x' }
+    return slots
+  }
+
   if (ents.some((e) => e.etype === 'unit')) {
     slots[0] = { hotkey: 'Q', label: 'stop', icon: 'x' }
   }
   return slots
 }
+
+/** Buildings offered in a worker's build menu, in grid order. */
+const BUILD_MENU: BuildingKind[] = [
+  'legionHall',
+  'granary',
+  'exchange',
+  'forge',
+  'kennel',
+  'citadel',
+  'institute',
+  'olympus',
+]
