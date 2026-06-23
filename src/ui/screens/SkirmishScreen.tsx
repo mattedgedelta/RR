@@ -97,7 +97,7 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
   const houseBadge = HOUSES[config.players[HUMAN].house].name
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selection = projectSelection(snap, selectedSet, houseBadge)
-  const slots = commandSlots(snap, selectedSet, snap.age)
+  const slots = commandSlots(snap, selectedSet, snap.age, config.players[HUMAN].house)
   const selectedBuildingId = snap.entities.find(
     (e) => selectedSet.has(e.id) && e.etype === 'building' && e.owner === HUMAN,
   )?.id

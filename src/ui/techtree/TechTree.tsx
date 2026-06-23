@@ -9,7 +9,7 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { AGE_ORDER, AGES, type AgeId } from '@/game/data/ages'
-import { TECH_BY_AGE, TECH_NODES, type TechId, type TechNode } from '@/game/data/tech'
+import { TECH_BY_AGE, TECH_NODES, HOUSE_SIGNATURE, type TechId, type TechNode } from '@/game/data/tech'
 import { HOUSES, type HouseId, type HouseDef } from '@/game/data/houses'
 import { AgeSpine } from './AgeSpine'
 import { TechColumn } from './TechColumn'
@@ -79,16 +79,21 @@ export function TechTree({ house, age = 'bondsman' }: TechTreeProps) {
       <div ref={containerRef} style={{ position: 'relative' }}>
         <Connectors lines={lines} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          {AGE_ORDER.map((ageId) => (
-            <TechColumn
-              key={ageId}
-              registerRef={registerRef}
-              nodes={TECH_BY_AGE[ageId].map((id) => ({
-                node: TECH_NODES[id],
-                state: stateOf(TECH_NODES[id], houseDef, currentIndex),
-              }))}
-            />
-          ))}
+          {AGE_ORDER.map((ageId) => {
+            // The Sovereign column's signature slot shows THIS House's gold tech.
+            const ids =
+              ageId === 'sovereign' ? [...TECH_BY_AGE[ageId], HOUSE_SIGNATURE[house]] : TECH_BY_AGE[ageId]
+            return (
+              <TechColumn
+                key={ageId}
+                registerRef={registerRef}
+                nodes={ids.map((id) => ({
+                  node: TECH_NODES[id],
+                  state: stateOf(TECH_NODES[id], houseDef, currentIndex),
+                }))}
+              />
+            )
+          })}
         </div>
       </div>
     </div>

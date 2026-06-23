@@ -9,6 +9,7 @@ import { RESOURCE_KINDS, RESOURCE_META } from '@/game/data/resources'
 import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
 import { UNITS, type UnitKind } from '@/game/data/units'
 import { AGES, ageAtLeast, type AgeId } from '@/game/data/ages'
+import { HOUSES, type HouseId } from '@/game/data/houses'
 import type { Snapshot } from '@/game/sim/snapshot'
 import type { ResourceItem, AgeView, SelectionView, SelectionStat, CommandSlot } from './types'
 
@@ -121,6 +122,7 @@ export function commandSlots(
   snap: Snapshot,
   ids: ReadonlySet<number>,
   age: AgeId,
+  house: HouseId,
 ): (CommandSlot | null)[] {
   const slots: (CommandSlot | null)[] = Array(8).fill(null)
   const ents = snap.entities.filter((e) => ids.has(e.id) && e.owner === HUMAN)
@@ -132,12 +134,14 @@ export function commandSlots(
     def.produces.forEach((u, i) => {
       if (i > 2) return // top row Q/W/E for trainees; R reserved for advance
       const ud = UNITS[u]
+      // Unique units (e.g. the Howler) are only trainable by the owning House.
+      const lockedUnique = ud.unique && !HOUSES[house].uniques.units.includes(u)
       slots[i] = {
         hotkey: SLOT_KEYS[i],
         label: `train_${u}`,
         icon: 'users',
         cost: ud.cost,
-        variant: ageAtLeast(age, ud.requiredAge) ? 'default' : 'disabled',
+        variant: ageAtLeast(age, ud.requiredAge) && !lockedUnique ? 'default' : 'disabled',
       }
     })
     if (building.kind === 'spire') {
