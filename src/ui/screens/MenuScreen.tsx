@@ -10,8 +10,8 @@ import { SectionLabel } from '@/ui/common/SectionLabel'
 import { Button } from '@/ui/common/Button'
 import { useHotkeys } from '@/ui/hooks/useHotkeys'
 
-export default function MenuScreen({ onPlay }: { onPlay: () => void }) {
-  useHotkeys({ '1': onPlay, enter: onPlay })
+export default function MenuScreen({ onPlay, onCodex }: { onPlay: () => void; onCodex: () => void }) {
+  useHotkeys({ '1': onPlay, enter: onPlay, '4': onCodex })
 
   return (
     <div
@@ -50,7 +50,9 @@ export default function MenuScreen({ onPlay }: { onPlay: () => void }) {
           </NavItem>
           <NavItem hotkey="2">multiplayer</NavItem>
           <NavItem hotkey="3">settings</NavItem>
-          <NavItem hotkey="4">codex</NavItem>
+          <NavItem hotkey="4" onClick={onCodex}>
+            codex
+          </NavItem>
         </nav>
 
         <div style={{ flex: 1 }} />

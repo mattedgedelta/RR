@@ -66,29 +66,29 @@ export interface HouseDef {
   uniques: HouseUniques
 }
 
-const NEUTRAL: HouseModifiers = {
-  gatherRate: 1,
-  unitHpMul: {},
-  buildingCostMul: {},
-  productionRateMul: {},
-}
-
-/** A stub House: specialty + name, neutral modifiers, no uniques. */
-const stub = (
+/** Build a House from its thematic modifiers + signature tech. Each modifier
+ *  lever feeds a real computation site in the sim (gather, unit HP, building
+ *  cost, production speed), so picking a House measurably changes play. */
+function house(
   id: HouseId,
   name: string,
   specialty: HouseSpecialty,
   blurb: string,
-): HouseDef => ({
-  id,
-  name,
-  label: `house_${id}`,
-  specialty,
-  blurb,
-  bonuses: [],
-  modifiers: { ...NEUTRAL, unitHpMul: {}, buildingCostMul: {}, productionRateMul: {} },
-  uniques: { units: [], techs: [] },
-})
+  bonuses: string[],
+  mods: Partial<HouseModifiers>,
+  signature: TechId,
+): HouseDef {
+  return {
+    id,
+    name,
+    label: `house_${id}`,
+    specialty,
+    blurb,
+    bonuses,
+    modifiers: { gatherRate: 1, unitHpMul: {}, buildingCostMul: {}, productionRateMul: {}, ...mods },
+    uniques: { units: [], techs: [signature] },
+  }
+}
 
 export const HOUSES: Record<HouseId, HouseDef> = {
   mars: {
@@ -106,22 +106,72 @@ export const HOUSES: Record<HouseId, HouseDef> = {
     },
     uniques: { units: ['howler'], techs: ['ironRain'] },
   },
-  diana: stub('diana', 'DIANA', 'archers', 'the hunt — masters of ranged warfare.'),
-  minerva: stub('minerva', 'MINERVA', 'defense', 'the bulwark — fortress and garrison.'),
-  mercury: stub(
-    'mercury',
-    'MERCURY',
-    'cavalry-archers',
-    'the swift — mounted skirmishers.',
+  diana: house(
+    'diana', 'DIANA', 'archers', 'the hunt — masters of ranged warfare.',
+    ['legion_hall +30% production', 'forge −20% cost'],
+    { productionRateMul: { legionHall: 1.3 }, buildingCostMul: { forge: 0.8 } },
+    'moonfallVolley',
   ),
-  pluto: stub('pluto', 'PLUTO', 'infantry', 'the deep — relentless heavy infantry.'),
-  neptune: stub('neptune', 'NEPTUNE', 'infantry', 'the tide — disciplined legions.'),
-  vulcan: stub('vulcan', 'VULCAN', 'infantry', 'the forge — armored shock troops.'),
-  jupiter: stub('jupiter', 'JUPITER', 'defense', 'the throne — towering citadels.'),
-  apollo: stub('apollo', 'APOLLO', 'balanced', 'the radiant — versatile and bright.'),
-  juno: stub('juno', 'JUNO', 'balanced', 'the matron — steady on all fronts.'),
-  ceres: stub('ceres', 'CERES', 'balanced', 'the harvest — abundant economy.'),
-  saturn: stub('saturn', 'SATURN', 'balanced', 'the elder — patient and enduring.'),
+  minerva: house(
+    'minerva', 'MINERVA', 'defense', 'the bulwark — fortress and garrison.',
+    ['citadels −30% cost', 'granary −20% cost'],
+    { buildingCostMul: { citadel: 0.7, granary: 0.8 } },
+    'aegisProtocol',
+  ),
+  mercury: house(
+    'mercury', 'MERCURY', 'cavalry-archers', 'the swift — mounted skirmishers.',
+    ['reds +15% gather', 'legion_hall +20% production'],
+    { gatherRate: 1.15, productionRateMul: { legionHall: 1.2 } },
+    'swiftStrike',
+  ),
+  pluto: house(
+    'pluto', 'PLUTO', 'infantry', 'the deep — relentless heavy infantry.',
+    ['obsidians +25% hp', 'legion_hall −15% cost'],
+    { unitHpMul: { obsidian: 1.25 }, buildingCostMul: { legionHall: 0.85 } },
+    'deepLegion',
+  ),
+  neptune: house(
+    'neptune', 'NEPTUNE', 'infantry', 'the tide — disciplined legions.',
+    ['obsidians +12% hp', 'reds +12% gather'],
+    { unitHpMul: { obsidian: 1.12 }, gatherRate: 1.12 },
+    'tidalDiscipline',
+  ),
+  vulcan: house(
+    'vulcan', 'VULCAN', 'infantry', 'the forge — armored shock troops.',
+    ['forge −30% cost', 'obsidians +15% hp', 'legion_hall +20% production'],
+    { buildingCostMul: { forge: 0.7 }, unitHpMul: { obsidian: 1.15 }, productionRateMul: { legionHall: 1.2 } },
+    'forgeTemper',
+  ),
+  jupiter: house(
+    'jupiter', 'JUPITER', 'defense', 'the throne — towering citadels.',
+    ['citadels −40% cost', 'spire −15% cost'],
+    { buildingCostMul: { citadel: 0.6, spire: 0.85 } },
+    'throneBulwark',
+  ),
+  apollo: house(
+    'apollo', 'APOLLO', 'balanced', 'the radiant — versatile and bright.',
+    ['reds +10% gather', 'obsidians +8% hp', 'legion_hall +10% production'],
+    { gatherRate: 1.1, unitHpMul: { obsidian: 1.08 }, productionRateMul: { legionHall: 1.1 } },
+    'radiantBalance',
+  ),
+  juno: house(
+    'juno', 'JUNO', 'balanced', 'the matron — steady on all fronts.',
+    ['reds +10% gather', 'spire & legion_hall +10% production'],
+    { gatherRate: 1.1, productionRateMul: { spire: 1.1, legionHall: 1.1 } },
+    'matronLogistics',
+  ),
+  ceres: house(
+    'ceres', 'CERES', 'balanced', 'the harvest — abundant economy.',
+    ['reds +35% gather', 'granary −25% cost', 'exchange −25% cost'],
+    { gatherRate: 1.35, buildingCostMul: { granary: 0.75, exchange: 0.75 } },
+    'harvestAbundance',
+  ),
+  saturn: house(
+    'saturn', 'SATURN', 'balanced', 'the elder — patient and enduring.',
+    ['reds +10% gather', 'obsidians +10% hp', 'spire −10% cost'],
+    { gatherRate: 1.1, unitHpMul: { obsidian: 1.1 }, buildingCostMul: { spire: 0.9 } },
+    'elderPatience',
+  ),
 }
 
 /** Default House for new matches (per the design). */

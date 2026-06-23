@@ -17,6 +17,7 @@ import {
   type PlayerSetup,
 } from '@/game/data/players'
 import { HOUSE_ORDER, HOUSES, DEFAULT_HOUSE, type HouseId } from '@/game/data/houses'
+import { TECH_NODES } from '@/game/data/tech'
 import { Panel } from '@/ui/common/Panel'
 import { Badge } from '@/ui/common/Badge'
 import { Button } from '@/ui/common/Button'
@@ -150,7 +151,7 @@ export default function SkirmishSetupScreen({ onDeploy, onBack }: SetupProps) {
           )}
           <SectionLabel>uniques</SectionLabel>
           <div style={{ fontSize: 11, color: FC.warn }}>
-            {[...houseDef.uniques.units, ...houseDef.uniques.techs].join(' · ') || '—'}
+            {[...houseDef.uniques.units, ...houseDef.uniques.techs.map((t) => TECH_NODES[t].label)].join(' · ') || '—'}
           </div>
         </Panel>
 

@@ -15,6 +15,7 @@ import type { Cost } from './resources'
 import type { AgeId } from './ages'
 import type { UnitKind } from './units'
 import type { BuildingKind } from './buildings'
+import type { HouseId } from './houses'
 
 export type TechKind = 'building' | 'unit' | 'upgrade'
 
@@ -31,6 +32,18 @@ export type TechId =
   | 'olympus'
   | 'olympicKnight'
   | 'ironRain'
+  // Per-House signature upgrades (gold ★; effect is baked into House modifiers).
+  | 'moonfallVolley'
+  | 'aegisProtocol'
+  | 'swiftStrike'
+  | 'deepLegion'
+  | 'tidalDiscipline'
+  | 'forgeTemper'
+  | 'throneBulwark'
+  | 'radiantBalance'
+  | 'matronLogistics'
+  | 'harvestAbundance'
+  | 'elderPatience'
 
 export interface TechNode {
   id: TechId
@@ -189,14 +202,49 @@ export const TECH_NODES: Record<TechId, TechNode> = {
     time: 60,
     unique: true,
   },
+  ...signature('moonfallVolley', 'moonfall_volley'),
+  ...signature('aegisProtocol', 'aegis_protocol'),
+  ...signature('swiftStrike', 'swift_strike'),
+  ...signature('deepLegion', 'deep_legion'),
+  ...signature('tidalDiscipline', 'tidal_discipline'),
+  ...signature('forgeTemper', 'forge_temper'),
+  ...signature('throneBulwark', 'throne_bulwark'),
+  ...signature('radiantBalance', 'radiant_balance'),
+  ...signature('matronLogistics', 'matron_logistics'),
+  ...signature('harvestAbundance', 'harvest_abundance'),
+  ...signature('elderPatience', 'elder_patience'),
 }
 
-/** Tech ids grouped by age, in declared order — the tech-tree columns. */
+/** One House signature upgrade node (gold ★; passive — its effect lives in the
+ *  House's modifiers). Shown only in its own House's tech tree. */
+function signature<K extends TechId>(id: K, label: string): Record<K, TechNode> {
+  const node: TechNode = { id, label, age: 'sovereign', kind: 'upgrade', prereqs: ['institute'], cost: {}, time: 0, unique: true }
+  return { [id]: node } as Record<K, TechNode>
+}
+
+/** Each House's signature tech — rendered as the gold node in its tech tree. */
+export const HOUSE_SIGNATURE: Record<HouseId, TechId> = {
+  mars: 'ironRain',
+  diana: 'moonfallVolley',
+  minerva: 'aegisProtocol',
+  mercury: 'swiftStrike',
+  pluto: 'deepLegion',
+  neptune: 'tidalDiscipline',
+  vulcan: 'forgeTemper',
+  jupiter: 'throneBulwark',
+  apollo: 'radiantBalance',
+  juno: 'matronLogistics',
+  ceres: 'harvestAbundance',
+  saturn: 'elderPatience',
+}
+
+/** Shared tech ids grouped by age. The Sovereign column's third slot is the
+ *  House signature (`HOUSE_SIGNATURE`), appended per-House by the TechTree. */
 export const TECH_BY_AGE: Record<AgeId, TechId[]> = {
   bondsman: ['spire', 'legionHall', 'granary'],
   initiate: ['exchange', 'forge', 'kennel'],
   peerless: ['citadel', 'institute', 'howler'],
-  sovereign: ['olympus', 'olympicKnight', 'ironRain'],
+  sovereign: ['olympus', 'olympicKnight'],
 }
 
 export const techNode = (id: TechId): TechNode => TECH_NODES[id]
