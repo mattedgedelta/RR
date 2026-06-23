@@ -69,6 +69,8 @@ export interface Snapshot {
   ageIndex: number
   ageAdvance: AgeAdvanceView | null
   defeated: boolean
+  /** An `underAttack` alert for player 0 this tick (toast + map ping), else null. */
+  alert: { text: string; x: number; y: number } | null
   entities: RenderEntity[]
   outcome: World['outcome']
 }
@@ -91,6 +93,7 @@ export function emptySnapshot(): Snapshot {
     ageIndex: AGES.bondsman.index,
     ageAdvance: null,
     defeated: false,
+    alert: null,
     entities: [],
     outcome: null,
   }
@@ -199,7 +202,18 @@ export function buildSnapshot(world: World): Snapshot {
     ageIndex: AGES[human.age].index,
     ageAdvance: ageAdvanceView(world, 0),
     defeated: human.defeated,
+    alert: humanAlert(world),
     entities,
     outcome: world.outcome,
   }
+}
+
+/** The most recent `underAttack` event for player 0 this tick, as HUD alert. */
+function humanAlert(world: World): Snapshot['alert'] {
+  for (const e of world.events) {
+    if (e.type === 'underAttack' && e.player === 0) {
+      return { text: `UNDER_ATTACK · ${e.quadrant}`, x: e.x, y: e.y }
+    }
+  }
+  return null
 }

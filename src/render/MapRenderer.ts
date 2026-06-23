@@ -176,6 +176,22 @@ export class MapRenderer {
       ctx.restore()
     }
 
+    // World-space overlay: expanding alert pings (camera transform still set).
+    if (this.view.pings.length) {
+      const PING_MS = 1400
+      this.view.pings = this.view.pings.filter((p) => now - p.born < PING_MS)
+      for (const p of this.view.pings) {
+        const age = (now - p.born) / PING_MS
+        ctx.globalAlpha = (1 - age) * 0.8
+        ctx.strokeStyle = FC.error
+        ctx.lineWidth = 2 / this.cam.zoom
+        ctx.beginPath()
+        ctx.arc(p.x * TILE, p.y * TILE, (0.4 + age * 2.2) * TILE, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+    }
+
     // Screen-space overlay: the live drag-select rectangle.
     const r = this.view.dragRect
     if (r) {

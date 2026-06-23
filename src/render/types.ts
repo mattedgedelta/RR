@@ -42,6 +42,8 @@ export interface ViewState {
   panKeys: Set<string>
   /** Building placement in progress (cursor ghost), or null. */
   placement: PlacementState | null
+  /** Active map pings (expanding rings); `born` is a performance.now() stamp. */
+  pings: { x: number; y: number; born: number }[]
 }
 
 export function createViewState(): ViewState {
@@ -52,6 +54,7 @@ export function createViewState(): ViewState {
     mouse: { x: 0, y: 0, inside: false },
     panKeys: new Set(),
     placement: null,
+    pings: [],
   }
 }
 
