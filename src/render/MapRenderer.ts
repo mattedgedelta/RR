@@ -49,12 +49,17 @@ const PAN_SPEED = 900
 /** Screen margin (px) that triggers edge-scroll. */
 const EDGE_MARGIN = 24
 
+/** Per-frame easing toward the true unit position (smooths 10 Hz stepping). */
+const SMOOTH = 0.35
+
 export class MapRenderer {
   readonly cam: Camera
   private rafId = 0
   private running = false
   private lastFrame = 0
   private dpr = 1
+  /** Eased render positions per unit id (visual interpolation between ticks). */
+  private readonly renderPos = new Map<number, { x: number; y: number }>()
   private readonly ctx: CanvasRenderingContext2D
 
   constructor(
@@ -139,13 +144,30 @@ export class MapRenderer {
     ctx.fillStyle = FC.board
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 
+    // Ease unit render positions toward the latest sim positions, then draw a
+    // snapshot view with those smoothed positions (layers stay pure).
+    const seen = new Set<number>()
+    const entities = snap.entities.map((e) => {
+      if (e.etype !== 'unit') return e
+      seen.add(e.id)
+      let rp = this.renderPos.get(e.id)
+      if (!rp) {
+        rp = { x: e.x, y: e.y }
+        this.renderPos.set(e.id, rp)
+      }
+      rp.x += (e.x - rp.x) * SMOOTH
+      rp.y += (e.y - rp.y) * SMOOTH
+      return { ...e, x: rp.x, y: rp.y }
+    })
+    for (const id of this.renderPos.keys()) if (!seen.has(id)) this.renderPos.delete(id)
+
     // World-space layers.
     this.cam.applyTransform(ctx, this.dpr)
     const lc = {
       ctx,
       cam: this.cam,
       map: this.map,
-      snap,
+      snap: { ...snap, entities },
       alpha: this.source.alpha,
       selected: this.view.selected,
       hover: this.view.hover,

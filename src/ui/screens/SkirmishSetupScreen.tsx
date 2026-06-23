@@ -1,17 +1,36 @@
 /**
- * SkirmishSetupScreen — M1 stub. Shows the default skirmish (you = House Mars
- * vs. 1 CPU, FFA, auto map) and DEPLOYs it. The full 3-column house/tech/match
- * configurator lands in Phase 11 (M5); this keeps the screen flow honest now.
+ * SkirmishSetupScreen — the full configurator (M5).
+ *
+ * Pick your House (12), read its bonuses/uniques, preview its tech DAG, and set
+ * up the match: 1–7 CPU opponents (each with a House + difficulty), FFA vs.
+ * Teams, and map size. DEPLOY assembles a MatchConfig and starts the skirmish.
  */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { FC, FONT, PLAYER_COLORS } from '@/theme/palette'
-import { defaultMatchConfig, type MatchConfig } from '@/game/data/players'
-import { HOUSES } from '@/game/data/houses'
+import {
+  playerColor,
+  DIFFICULTIES,
+  type Difficulty,
+  type MapSizeId,
+  type MatchConfig,
+  type PlayerId,
+  type PlayerSetup,
+} from '@/game/data/players'
+import { HOUSE_ORDER, HOUSES, DEFAULT_HOUSE, type HouseId } from '@/game/data/houses'
 import { Panel } from '@/ui/common/Panel'
 import { Badge } from '@/ui/common/Badge'
 import { Button } from '@/ui/common/Button'
 import { SectionLabel } from '@/ui/common/SectionLabel'
+import { TechTree } from '@/ui/techtree/TechTree'
 import { useHotkeys } from '@/ui/hooks/useHotkeys'
+
+const MAP_SIZES: MapSizeId[] = ['auto', 'small', 'medium', 'large', 'huge']
+const cycle = <T,>(arr: readonly T[], cur: T): T => arr[(arr.indexOf(cur) + 1) % arr.length]
+
+interface Opponent {
+  house: HouseId
+  difficulty: Difficulty
+}
 
 interface SetupProps {
   onDeploy: (config: MatchConfig) => void
@@ -19,10 +38,39 @@ interface SetupProps {
 }
 
 export default function SkirmishSetupScreen({ onDeploy, onBack }: SetupProps) {
-  // A fresh seed per visit so the same defaults still vary the map.
-  const config = useMemo(() => defaultMatchConfig(Math.floor(Math.random() * 0xffffffff)), [])
+  const [house, setHouse] = useState<HouseId>(DEFAULT_HOUSE)
+  const [opponents, setOpponents] = useState<Opponent[]>([{ house: 'diana', difficulty: 'normal' }])
+  const [teams, setTeams] = useState(false)
+  const [mapSize, setMapSize] = useState<MapSizeId>('auto')
 
-  useHotkeys({ enter: () => onDeploy(config), escape: onBack })
+  const total = 1 + opponents.length
+
+  const setOppCount = (n: number): void => {
+    const next = Math.max(1, Math.min(7, n))
+    setOpponents((prev) => {
+      const out = prev.slice(0, next)
+      while (out.length < next) out.push({ house: 'mars', difficulty: 'normal' })
+      return out
+    })
+  }
+  const editOpp = (i: number, patch: Partial<Opponent>): void =>
+    setOpponents((prev) => prev.map((o, j) => (j === i ? { ...o, ...patch } : o)))
+
+  const build = (): MatchConfig => {
+    const half = Math.ceil(total / 2)
+    const teamOf = (idx: number): number => (teams ? (idx < half ? 0 : 1) : idx)
+    const players: PlayerSetup[] = [
+      { id: 0, kind: 'human', house, team: teamOf(0), difficulty: 'normal', color: playerColor(0) },
+      ...opponents.map((o, i): PlayerSetup => {
+        const id = (i + 1) as PlayerId
+        return { id, kind: 'cpu', house: o.house, team: teamOf(i + 1), difficulty: o.difficulty, color: playerColor(id) }
+      }),
+    ]
+    return { seed: Math.floor(Math.random() * 0xffffffff), players, mapSize }
+  }
+
+  useHotkeys({ enter: () => onDeploy(build()), escape: onBack })
+  const houseDef = useMemo(() => HOUSES[house], [house])
 
   return (
     <div
@@ -33,55 +81,193 @@ export default function SkirmishSetupScreen({ onDeploy, onBack }: SetupProps) {
         background: FC.board,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 22,
+        gap: 14,
+        padding: 24,
         fontFamily: FONT.mono,
         color: FC.text,
+        overflow: 'auto',
       }}
     >
-      <div style={{ fontSize: 11, letterSpacing: 2, color: FC.accent }}>// skirmish_setup</div>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 11, letterSpacing: 2, color: FC.accent }}>// skirmish_setup</span>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button variant="ghost" onClick={onBack}>
+            [ESC] BACK
+          </Button>
+          <Button variant="primary" onClick={() => onDeploy(build())}>
+            DEPLOY ↵
+          </Button>
+        </div>
+      </header>
 
-      <Panel title="match_config" style={{ width: 440 }}>
-        <Row label="players">
-          {config.players.map((p) => (
-            <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginRight: 12 }}>
-              <span style={{ width: 9, height: 9, borderRadius: 2, background: PLAYER_COLORS[p.id] }} />
-              <span style={{ fontSize: 11, color: FC.text2 }}>
-                {p.kind === 'human' ? 'you' : 'cpu'} · {HOUSES[p.house].label}
-                {p.kind === 'cpu' && <span style={{ color: FC.textDim }}> ({p.difficulty})</span>}
-              </span>
-            </span>
-          ))}
-        </Row>
-        <Row label="mode">
-          <Badge>free_for_all</Badge>
-        </Row>
-        <Row label="map">
-          <span style={{ fontSize: 11, color: FC.text2 }}>auto · seed {config.seed}</span>
-        </Row>
-        <SectionLabel color={FC.textFaint} style={{ marginTop: 4 }}>
-          full_configurator_in_M5
-        </SectionLabel>
-      </Panel>
+      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 1fr', gap: 14, alignItems: 'start' }}>
+        {/* House picker */}
+        <Panel title="house">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {HOUSE_ORDER.map((h) => {
+              const active = h === house
+              return (
+                <button
+                  key={h}
+                  onClick={() => setHouse(h)}
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                    textAlign: 'left',
+                    padding: '7px 8px',
+                    borderRadius: 5,
+                    cursor: 'pointer',
+                    background: active ? FC.borderFaint : FC.card,
+                    border: `1px solid ${active ? FC.borderActive : FC.border}`,
+                    color: active ? FC.accent : FC.text3,
+                  }}
+                >
+                  {HOUSES[h].name.toLowerCase()}
+                  <div style={{ fontSize: 8, color: FC.textDim }}>{HOUSES[h].specialty}</div>
+                </button>
+              )
+            })}
+          </div>
+        </Panel>
 
-      <div style={{ display: 'flex', gap: 12 }}>
-        <Button variant="ghost" onClick={onBack}>
-          [ESC] BACK
-        </Button>
-        <Button variant="primary" onClick={() => onDeploy(config)}>
-          DEPLOY ↵
-        </Button>
+        {/* House detail */}
+        <Panel title="house_detail">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge>{houseDef.name}</Badge>
+            <span style={{ fontSize: 10, color: FC.textDim }}>{houseDef.specialty}</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 11, lineHeight: 1.6, color: FC.text3 }}>{houseDef.blurb}</p>
+          <SectionLabel>bonuses</SectionLabel>
+          {houseDef.bonuses.length ? (
+            houseDef.bonuses.map((b) => (
+              <div key={b} style={{ fontSize: 11, color: FC.accent }}>
+                + {b}
+              </div>
+            ))
+          ) : (
+            <div style={{ fontSize: 11, color: FC.textDimmer }}>neutral — no bonuses</div>
+          )}
+          <SectionLabel>uniques</SectionLabel>
+          <div style={{ fontSize: 11, color: FC.warn }}>
+            {[...houseDef.uniques.units, ...houseDef.uniques.techs].join(' · ') || '—'}
+          </div>
+        </Panel>
+
+        {/* Match config */}
+        <Panel title="match">
+          <Row label="opponents">
+            <Stepper value={opponents.length} onDec={() => setOppCount(opponents.length - 1)} onInc={() => setOppCount(opponents.length + 1)} />
+            <span style={{ fontSize: 10, color: FC.textDim, marginLeft: 8 }}>{total} players</span>
+          </Row>
+          <Row label="mode">
+            <Toggle on={!teams} label="ffa" onClick={() => setTeams(false)} />
+            <Toggle on={teams} label="teams" onClick={() => setTeams(true)} />
+          </Row>
+          <Row label="map">
+            <CycleBtn value={mapSize} onClick={() => setMapSize(cycle(MAP_SIZES, mapSize))} />
+          </Row>
+          <SectionLabel>cpu_roster</SectionLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 150, overflow: 'auto' }}>
+            {opponents.map((o, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 9, height: 9, borderRadius: 2, background: PLAYER_COLORS[i + 1] }} />
+                <span style={{ fontSize: 10, color: FC.textDim, width: 44 }}>cpu_{i + 1}</span>
+                <CycleBtn value={HOUSES[o.house].name.toLowerCase()} onClick={() => editOpp(i, { house: cycle(HOUSE_ORDER, o.house) })} />
+                <CycleBtn value={o.difficulty} onClick={() => editOpp(i, { difficulty: cycle(DIFFICULTIES, o.difficulty) })} />
+              </div>
+            ))}
+          </div>
+        </Panel>
       </div>
+
+      <Panel title="tech_tree">
+        <TechTree house={house} />
+      </Panel>
     </div>
   )
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-      <span style={{ width: 70, fontSize: 10, letterSpacing: 1, color: FC.textDim }}>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>{children}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ width: 78, fontSize: 10, letterSpacing: 1, color: FC.textDim }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{children}</div>
     </div>
+  )
+}
+
+function Stepper({ value, onDec, onInc }: { value: number; onDec: () => void; onInc: () => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <MiniBtn onClick={onDec}>−</MiniBtn>
+      <span style={{ fontSize: 13, color: FC.text, minWidth: 14, textAlign: 'center' }}>{value}</span>
+      <MiniBtn onClick={onInc}>+</MiniBtn>
+    </div>
+  )
+}
+
+function MiniBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: FONT.mono,
+        fontSize: 13,
+        width: 24,
+        height: 24,
+        borderRadius: 5,
+        cursor: 'pointer',
+        background: FC.card,
+        border: `1px solid ${FC.border}`,
+        color: FC.text2,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Toggle({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: FONT.mono,
+        fontSize: 10,
+        letterSpacing: 1,
+        padding: '5px 10px',
+        borderRadius: 5,
+        cursor: 'pointer',
+        background: on ? FC.borderFaint : FC.card,
+        border: `1px solid ${on ? FC.borderActive : FC.border}`,
+        color: on ? FC.accent : FC.textDim,
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+function CycleBtn({ value, onClick }: { value: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: FONT.mono,
+        fontSize: 10,
+        letterSpacing: 0.5,
+        padding: '5px 9px',
+        borderRadius: 5,
+        cursor: 'pointer',
+        background: FC.card,
+        border: `1px solid ${FC.border}`,
+        color: FC.text2,
+        minWidth: 70,
+        textAlign: 'left',
+      }}
+    >
+      {value}
+    </button>
   )
 }

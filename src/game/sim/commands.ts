@@ -185,6 +185,8 @@ function apply(world: World, cmd: Command): void {
       const udef = UNITS[cmd.unit]
       const p = world.players[cmd.player]
       if (!ageAtLeast(p.age, udef.requiredAge)) break
+      // Unique units (e.g. the Howler) only for the House that owns them.
+      if (udef.unique && !HOUSES[p.house].uniques.units.includes(cmd.unit)) break
       const count = Math.max(1, cmd.count ?? 1)
       for (let i = 0; i < count; i++) {
         if (!canAfford(p.resources, udef.cost)) break
