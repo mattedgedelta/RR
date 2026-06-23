@@ -34,11 +34,15 @@ function fight(world: World, u: Unit, alerted: Set<number>): void {
     target = undefined
   }
 
+  const military = def.role !== 'worker'
+
   // Acquire if we have none and we're allowed to engage.
   if (!target) {
-    const military = def.role !== 'worker'
     if (u.order === 'attack' || u.order === 'attackMove' || (u.order === 'idle' && military)) {
-      target = acquire(world, u, def.los)
+      target = acquire(world, u, def.los) // ordered units / idle soldiers scan full LOS
+      u.attackTargetId = target ? target.id : null
+    } else if (u.order === 'idle') {
+      target = acquire(world, u, WORKER_DEFEND_RANGE) // idle workers retaliate only at arm's length
       u.attackTargetId = target ? target.id : null
     }
   }
@@ -61,6 +65,9 @@ function fight(world: World, u: Unit, alerted: Set<number>): void {
       strike(world, def, target, alerted)
       u.cooldown = Math.max(1, Math.round(def.attackCooldown * TICK_HZ))
     }
+  } else if (u.order === 'idle' && !military) {
+    // A worker won't leave its post to chase — drop the target and stay put.
+    u.attackTargetId = null
   } else {
     // Chase: repoint toward the target, but only repath when it has drifted.
     const tp = targetPos(target)
@@ -71,6 +78,9 @@ function fight(world: World, u: Unit, alerted: Set<number>): void {
     if (u.order === 'idle') u.order = 'attack'
   }
 }
+
+/** How close an enemy must be for an idle worker to swing back (tiles). */
+const WORKER_DEFEND_RANGE = 1.6
 
 function strike(world: World, def: UnitDef, target: Entity, alerted: Set<number>): void {
   if (target.etype === 'resource') return

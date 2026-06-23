@@ -43,14 +43,20 @@ function think(world: World, p: Player, tier: DifficultyTier): void {
     else military.push(u)
   }
 
-  // 1) Idle workers → gather the nearest node.
-  for (const w of workers) {
-    if (w.order !== 'idle') continue
-    const node = nearestNode(world, w.x, w.y)
-    if (node) dispatch(world, { type: 'gather', player: p.id, unitIds: [w.id], nodeId: node.id })
-  }
-
   const spire = buildings.find((b) => b.kind === 'spire' && b.state === 'complete')
+  const base = spire ?? buildings[0]
+
+  // 1) Idle workers → gather the node nearest the BASE (mine out close before
+  //    extending), not merely the node nearest the worker.
+  if (base) {
+    const ox = base.x + base.w / 2
+    const oy = base.y + base.h / 2
+    for (const w of workers) {
+      if (w.order !== 'idle') continue
+      const node = nearestNode(world, ox, oy)
+      if (node) dispatch(world, { type: 'gather', player: p.id, unitIds: [w.id], nodeId: node.id })
+    }
+  }
 
   // 2) Build order: ensure a Legion Hall (counts foundations so we build one once).
   if (!buildings.some((b) => b.kind === 'legionHall') && canAfford(p.resources, BUILDINGS.legionHall.cost)) {

@@ -24,6 +24,18 @@ export const drawSelection: DrawLayer = ({ ctx, cam, snap, selected }) => {
       bracket(ctx, x + w, y, -len, len) // TR
       bracket(ctx, x, y + h, len, -len) // BL
       bracket(ctx, x + w, y + h, -len, -len) // BR
+    } else if (e.etype === 'resource') {
+      // Diamond outline around the node tile.
+      const cx = (e.x + 0.5) * TILE
+      const cy = (e.y + 0.5) * TILE
+      const r = TILE * 0.45
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - r)
+      ctx.lineTo(cx + r, cy)
+      ctx.lineTo(cx, cy + r)
+      ctx.lineTo(cx - r, cy)
+      ctx.closePath()
+      ctx.stroke()
     }
   }
   ctx.restore()

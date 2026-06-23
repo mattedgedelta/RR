@@ -96,6 +96,20 @@ export function projectSelection(
     return { name: def.label, owner: e.owner, hp: Math.round(e.hp01 * def.hp), maxHp: def.hp, badge, stats, production: null }
   }
 
+  if (e.etype === 'resource') {
+    const amount = Math.round(e.amount ?? 0)
+    const max = Math.round(e.maxAmount ?? 0)
+    return {
+      name: e.kind,
+      owner: -1,
+      hp: amount,
+      maxHp: max,
+      barLabel: 'remaining',
+      stats: [{ label: 'left', value: `${amount}/${max}` }],
+      production: null,
+    }
+  }
+
   return null
 }
 

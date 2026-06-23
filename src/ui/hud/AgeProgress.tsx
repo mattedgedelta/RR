@@ -7,6 +7,7 @@ import { RESOURCE_META } from '@/game/data/resources'
 import type { Cost, ResourceKind } from '@/game/data/resources'
 import { RESOURCE_KINDS } from '@/game/data/resources'
 import { Button } from '@/ui/common/Button'
+import { Bar } from '@/ui/common/Bar'
 import type { AgeView } from './types'
 
 function costLabel(cost: Cost): string {
@@ -41,13 +42,25 @@ export function AgeProgress({ age, onAdvance }: AgeProgressProps) {
           ))}
         </div>
       </div>
-      {age.advance && (
-        <Button variant="primary" onClick={onAdvance} style={{ lineHeight: 1.3 }}>
-          [R] {age.advance.label.toUpperCase()}
-          <span style={{ display: 'block', fontSize: 9, opacity: 0.85 }}>
-            {costLabel(age.advance.cost)}
-          </span>
-        </Button>
+      {age.inProgress && age.advance ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 150 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 9 }}>
+            <span style={{ color: FC.accent, letterSpacing: 1 }}>
+              {age.advance.label.replace(/^advance_/, '→ ').toUpperCase()}
+            </span>
+            <span style={{ color: FC.textDim }}>{Math.round(age.progress01 * 100)}%</span>
+          </div>
+          <Bar value={age.progress01} height={5} />
+        </div>
+      ) : (
+        age.advance && (
+          <Button variant="primary" onClick={onAdvance} style={{ lineHeight: 1.3 }}>
+            [R] {age.advance.label.toUpperCase()}
+            <span style={{ display: 'block', fontSize: 9, opacity: 0.85 }}>
+              {costLabel(age.advance.cost)}
+            </span>
+          </Button>
+        )
       )}
     </div>
   )
