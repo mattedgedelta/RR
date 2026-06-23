@@ -10,9 +10,11 @@
  */
 import { useEffect, useRef } from 'react'
 import type { GameMap } from '@/game/sim/map'
+import type { EntityId } from '@/game/sim/entities'
 import { dispatch } from '@/game/store'
 import { MapRenderer, type FrameSource } from '@/render/MapRenderer'
-import { createViewState } from '@/render/types'
+import type { Camera } from '@/render/Camera'
+import { createViewState, type ViewState } from '@/render/types'
 import { HitTest, dist2, rectFromPoints } from '@/render/HitTest'
 
 const HUMAN = 0 as const
@@ -32,11 +34,19 @@ const PAN_KEY: Record<string, string> = {
 interface ViewportProps {
   source: FrameSource
   map: GameMap
+  /** Shared camera/view (the skirmish screen owns these so the minimap can too). */
+  camera?: Camera
+  view?: ViewState
+  /** Fired after the selection set changes (click / box-select / clear). */
+  onSelect?: (ids: EntityId[]) => void
 }
 
-export default function Viewport({ source, map }: ViewportProps) {
+export default function Viewport({ source, map, camera, view: propView, onSelect }: ViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const viewRef = useRef(createViewState())
+  const internalView = useRef(createViewState())
+  const view = propView ?? internalView.current
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
 
   // Left-drag (select) and middle-drag (pan) gesture state.
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null)
@@ -45,8 +55,7 @@ export default function Viewport({ source, map }: ViewportProps) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const view = viewRef.current
-    const renderer = new MapRenderer(canvas, source, map, view)
+    const renderer = new MapRenderer(canvas, source, map, view, camera)
     renderer.start()
     const cam = renderer.cam
 
@@ -130,6 +139,7 @@ export default function Viewport({ source, map }: ViewportProps) {
         const picked = hit.pickAt(cam, p.x, p.y)
         view.selected = picked ? new Set([picked.id]) : new Set()
       }
+      onSelectRef.current?.([...view.selected])
     }
 
     const onPointerLeave = (): void => {
@@ -165,7 +175,7 @@ export default function Viewport({ source, map }: ViewportProps) {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [source, map])
+  }, [source, map, view, camera])
 
   return (
     <canvas

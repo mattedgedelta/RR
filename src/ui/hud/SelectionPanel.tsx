@@ -36,15 +36,17 @@ export function SelectionPanel({ selection }: { selection: SelectionView | null 
         {selection.badge && <Badge>{selection.badge}</Badge>}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 11 }}>
-          <span style={{ color: FC.textDim }}>hp</span>
-          <span style={{ color: FC.text3 }}>
-            {selection.hp}/{selection.maxHp} · {Math.round(frac * 100)}%
-          </span>
+      {selection.maxHp > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 11 }}>
+            <span style={{ color: FC.textDim }}>hp</span>
+            <span style={{ color: FC.text3 }}>
+              {selection.hp}/{selection.maxHp} · {Math.round(frac * 100)}%
+            </span>
+          </div>
+          <Bar value={frac} color={hpColor(frac)} height={5} />
         </div>
-        <Bar value={frac} color={hpColor(frac)} height={5} />
-      </div>
+      )}
 
       {selection.stats.length > 0 && (
         <div style={{ display: 'flex', gap: 18 }}>
