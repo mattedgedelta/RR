@@ -27,8 +27,8 @@ Phased build per `plan.md` (Phases 0–11, milestones M0–M6).
 | **1 — Theme foundation** | M0 | ✅ done |
 | **2 — Data layer** | M0 | ✅ done |
 | **3 — Simulation core** | M0 | ✅ done |
-| 4 — Loop, store, React boundary | M0 | ⏳ next |
-| 5 — Rendering | M1 | ⬜ todo |
+| **4 — Loop, store, React boundary** | M0 | ✅ done |
+| 5 — Rendering | M1 | ⏳ next |
 | 6 — HUD chrome | M1 | ⬜ todo |
 | 7 — Screens & flow | M1 | ⬜ todo |
 | 8 — Economy | M2 | ⬜ todo |
@@ -42,5 +42,6 @@ Phased build per `plan.md` (Phases 0–11, milestones M0–M6).
 - **Phase 1** — `src/theme/`: `palette.ts` (color/layout source of truth), `tokens.css` (ED foundation + `--fc-*` semantic layer), `global.css` (resets, JetBrains Mono base, grid utilities, `edpulse`), `icons.tsx` (16 Lucide glyphs as React `<Icon>` + raw `Path2D` strings).
 - **Phase 2** — `src/game/data/`: `resources.ts`, `ages.ts`, `units.ts`, `buildings.ts`, `tech.ts` (12-node DAG), `houses.ts` (12 Houses; Mars fully specified), `players.ts` (8 colors, difficulty tiers, `MatchConfig`). All values mirror the confirmed design frame.
 - **Phase 3** — `src/game/sim/`: `rng.ts` (seeded mulberry32), `map.ts` (tile grid, occupancy/passability, radial starts, auto-scaling size), `entities.ts` (Unit/Building/ResourceNode + factories), `world.ts` (`createWorld` seeds 2–8 balanced bases), `commands.ts` (single mutation channel: dispatch/apply with cost charging + validation), `snapshot.ts` (World→Snapshot projection), `tick.ts` (10 Hz pipeline + cleanup). The 9 `systems/` are stubbed with final signatures (filled in Phases 8–11). Verified: 600-tick 1v1 + 400-tick 8-player runs, deterministic by seed, commands apply correctly.
+- **Phase 4** — the React boundary (end of M0): `src/game/store.ts` (external snapshot store + tearing-safe `useGameValue(selector)` with memoised, equality-checked selections so widgets re-render only when their slice changes; `dispatch(cmd)` routes UI commands to the active world), `src/game/loop.ts` (`GameLoop` — fixed-timestep rAF accumulator at 10 Hz with `MAX_STEPS_PER_FRAME` spiral guard, pause/resume, 0.25×–8× speed, and `alpha` interpolation for the renderer), and `src/ui/hooks/` (`useRafText`/`useRafWidth` write `textContent`/`style.width` imperatively with zero re-renders; `useGameValue`, `useScreen` state machine, `useHotkeys`). Checkpoint `LoopDebug` mounts a live world: clock ticks with no React re-render, counters update via selectors, pause/speed verified.
 
 _Each phase ends green on `npm run typecheck` + `npm run build`._

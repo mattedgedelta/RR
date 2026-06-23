@@ -72,6 +72,28 @@ export interface Snapshot {
   outcome: World['outcome']
 }
 
+/** Snapshot for a not-yet-started match — the store's initial value. */
+export function emptySnapshot(): Snapshot {
+  return {
+    tick: 0,
+    clock: '00:00',
+    mapW: 0,
+    mapH: 0,
+    resources: emptyBag(),
+    rates: emptyBag(),
+    pop: 0,
+    popCap: 0,
+    idleCount: 0,
+    age: 'bondsman',
+    ageName: AGES.bondsman.name,
+    ageIndex: AGES.bondsman.index,
+    ageAdvance: null,
+    defeated: false,
+    entities: [],
+    outcome: null,
+  }
+}
+
 function formatClock(tick: number): string {
   const total = Math.floor(tick / TICK_HZ)
   const m = Math.floor(total / 60)
