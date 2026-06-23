@@ -31,6 +31,7 @@ import { SelectionPanel } from '@/ui/hud/SelectionPanel'
 import { CommandGrid } from '@/ui/hud/CommandGrid'
 import { MinimapPanel } from '@/ui/hud/MinimapPanel'
 import { ViewportOverlay } from '@/ui/hud/ViewportOverlay'
+import { AlertToast } from '@/ui/hud/AlertToast'
 import type { CommandSlot } from '@/ui/hud/types'
 import { resourceItems, ageView, projectSelection, commandSlots } from '@/ui/hud/connect'
 
@@ -59,6 +60,9 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
   const { world, loop, camera, view } = ref.current
 
   const [selectedIds, setSelectedIds] = useState<EntityId[]>([])
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
+  const lastPing = useRef(0)
 
   useEffect(() => {
     loop.start()
@@ -71,10 +75,24 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
   // Live state.
   const snap = useGameValue((s) => s)
   const outcome = useGameValue((s) => s.outcome)
+  const alert = useGameValue((s) => s.alert)
 
   useEffect(() => {
     if (outcome) onResult(outcome)
   }, [outcome, onResult])
+
+  // UNDER_ATTACK → toast (lingers 4s after the last hit) + a throttled map ping.
+  useEffect(() => {
+    if (!alert) return
+    setToast(alert.text)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 4000)
+    const t = performance.now()
+    if (t - lastPing.current > 1000) {
+      lastPing.current = t
+      view.pings.push({ x: alert.x, y: alert.y, born: t })
+    }
+  }, [alert, view])
 
   const houseBadge = HOUSES[config.players[HUMAN].house].name
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
@@ -194,6 +212,11 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         <Viewport source={loop} map={world.map} camera={camera} view={view} onSelect={setSelectedIds} />
         <ViewportOverlay gridW={world.map.width} gridH={world.map.height} />
+        {toast && (
+          <div style={{ position: 'absolute', top: 44, right: 12 }}>
+            <AlertToast message={toast} />
+          </div>
+        )}
       </div>
 
       {/* Bottom bar */}
