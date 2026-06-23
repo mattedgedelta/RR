@@ -39,7 +39,7 @@ export function SelectionPanel({ selection }: { selection: SelectionView | null 
       {selection.maxHp > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 11 }}>
-            <span style={{ color: FC.textDim }}>hp</span>
+            <span style={{ color: FC.textDim }}>{selection.barLabel ?? 'hp'}</span>
             <span style={{ color: FC.text3 }}>
               {selection.hp}/{selection.maxHp} · {Math.round(frac * 100)}%
             </span>

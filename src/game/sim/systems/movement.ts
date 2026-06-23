@@ -15,10 +15,11 @@ import { TICK_HZ, type World } from '../world'
 import type { Unit } from '../entities'
 
 const DT = 1 / TICK_HZ
-/** Distance at which two moving units start pushing apart (tiles). */
-const SEP_RADIUS = 0.6
-/** Max separation nudge applied per tick (tiles). */
-const SEP_MAX = 0.12
+/** Distance at which two units start pushing apart (tiles) — only near-overlap,
+ *  so it declutters stacks without braking units that merely pass close by. */
+const SEP_RADIUS = 0.45
+/** Max separation nudge applied per tick (tiles) — small, to barely affect speed. */
+const SEP_MAX = 0.06
 
 export function runMovement(world: World): void {
   for (const u of world.units.values()) follow(u)

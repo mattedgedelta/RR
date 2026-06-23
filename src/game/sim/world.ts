@@ -107,6 +107,8 @@ export interface World {
   nextEntityId: EntityId
   commandQueue: Command[]
   events: GameEvent[]
+  /** Player 0 vision grid (0 unseen · 1 explored · 2 visible); render-only. */
+  fog: Uint8Array
   /** null while the match is ongoing. */
   outcome: Outcome | null
 }
@@ -199,6 +201,7 @@ export function createWorld(seed: number, config: MatchConfig): World {
     nextEntityId: 1,
     commandQueue: [],
     events: [],
+    fog: new Uint8Array(map.width * map.height),
     outcome: null,
   }
 

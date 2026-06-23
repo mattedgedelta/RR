@@ -11,6 +11,8 @@ import type { UnitKind } from '../data/units'
 import type { Cost } from '../data/resources'
 import { AGES } from '../data/ages'
 import { RESOURCE_META, emptyBag } from '../data/resources'
+import { UNITS } from '../data/units'
+import { BUILDINGS } from '../data/buildings'
 import type { EntityType, BuildingState, UnitOrder } from './entities'
 import { type World, TICK_HZ } from './world'
 
@@ -36,8 +38,10 @@ export interface RenderEntity {
   queueLen?: number
   /** Unit only. */
   order?: UnitOrder
-  /** Resource node only: remaining fraction. */
+  /** Resource node only: remaining fraction + raw amounts. */
   amount01?: number
+  amount?: number
+  maxAmount?: number
 }
 
 export interface AgeAdvanceView {
@@ -71,6 +75,8 @@ export interface Snapshot {
   defeated: boolean
   /** An `underAttack` alert for player 0 this tick (toast + map ping), else null. */
   alert: { text: string; x: number; y: number } | null
+  /** Per-tile vision for player 0: 0 unseen · 1 explored · 2 visible (row-major). */
+  fog: Uint8Array
   entities: RenderEntity[]
   outcome: World['outcome']
 }
@@ -94,8 +100,47 @@ export function emptySnapshot(): Snapshot {
     ageAdvance: null,
     defeated: false,
     alert: null,
+    fog: new Uint8Array(0),
     entities: [],
     outcome: null,
+  }
+}
+
+/** Player 0 enemy? (neutral resources are owner -1; allies share a team). */
+const isEnemyOf0 = (world: World, owner: number): boolean =>
+  owner >= 0 && world.players[owner].team !== world.players[0].team
+
+/**
+ * Refresh player 0's vision in place: demote visible→explored, then reveal the
+ * LOS circle of every friendly unit/building. Persisted on the World so explored
+ * tiles stay remembered between ticks.
+ */
+function updateFog(world: World): void {
+  const W = world.map.width
+  const H = world.map.height
+  const fog = world.fog
+  for (let i = 0; i < fog.length; i++) if (fog[i] === 2) fog[i] = 1
+
+  const reveal = (cx: number, cy: number, r: number): void => {
+    const r2 = r * r
+    const minX = Math.max(0, Math.floor(cx - r))
+    const maxX = Math.min(W - 1, Math.ceil(cx + r))
+    const minY = Math.max(0, Math.floor(cy - r))
+    const maxY = Math.min(H - 1, Math.ceil(cy + r))
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const dx = x + 0.5 - cx
+        const dy = y + 0.5 - cy
+        if (dx * dx + dy * dy <= r2) fog[y * W + x] = 2
+      }
+    }
+  }
+
+  for (const u of world.units.values()) {
+    if (!isEnemyOf0(world, u.owner)) reveal(u.x, u.y, UNITS[u.kind].los)
+  }
+  for (const b of world.buildings.values()) {
+    if (!isEnemyOf0(world, b.owner)) reveal(b.x + b.w / 2, b.y + b.h / 2, BUILDINGS[b.kind].los)
   }
 }
 
@@ -133,8 +178,13 @@ function ageAdvanceView(world: World, playerIdx: number): AgeAdvanceView | null 
 export function buildSnapshot(world: World): Snapshot {
   const human = world.players[0]
   const entities: RenderEntity[] = []
+  updateFog(world)
+  const W = world.map.width
+  const fog = world.fog
 
   for (const b of world.buildings.values()) {
+    // Hide enemy buildings until their tile has been explored.
+    if (isEnemyOf0(world, b.owner) && fog[b.y * W + b.x] < 1) continue
     const head = b.queue[0]
     entities.push({
       id: b.id,
@@ -155,6 +205,8 @@ export function buildSnapshot(world: World): Snapshot {
   }
 
   for (const u of world.units.values()) {
+    // Hide enemy units unless their tile is currently visible.
+    if (isEnemyOf0(world, u.owner) && fog[Math.floor(u.y) * W + Math.floor(u.x)] !== 2) continue
     entities.push({
       id: u.id,
       etype: 'unit',
@@ -183,6 +235,8 @@ export function buildSnapshot(world: World): Snapshot {
       h: 1,
       hp01: 1,
       amount01: n.maxAmount > 0 ? n.amount / n.maxAmount : 0,
+      amount: n.amount,
+      maxAmount: n.maxAmount,
     })
   }
 
@@ -203,6 +257,7 @@ export function buildSnapshot(world: World): Snapshot {
     ageAdvance: ageAdvanceView(world, 0),
     defeated: human.defeated,
     alert: humanAlert(world),
+    fog: world.fog,
     entities,
     outcome: world.outcome,
   }

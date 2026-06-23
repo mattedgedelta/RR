@@ -52,6 +52,8 @@ export interface SelectionView {
   owner: number
   hp: number
   maxHp: number
+  /** Label for the bar (default 'hp'; 'remaining' for resource nodes). */
+  barLabel?: string
   /** House tag, e.g. MARS. */
   badge?: string
   stats: SelectionStat[]
