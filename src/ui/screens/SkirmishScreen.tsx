@@ -101,6 +101,19 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     setSelectedIds([])
   }
 
+  // Cycle-select the next idle worker and centre the camera on it.
+  const idleCycle = useRef(0)
+  const cycleIdle = (): void => {
+    const ids = snap.idleUnitIds
+    if (ids.length === 0) return
+    const id = ids[idleCycle.current % ids.length]
+    idleCycle.current += 1
+    view.selected = new Set([id])
+    setSelectedIds([id])
+    const e = snap.entities.find((en) => en.id === id)
+    if (e) camera.centerOn(e.x, e.y)
+  }
+
   const runSlot = (slot: CommandSlot | null): void => {
     if (!slot || slot.variant === 'disabled') return
     if (slot.label.startsWith('train_')) {
@@ -147,7 +160,7 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       >
         <ResourceBar items={resourceItems(snap)} pop={snap.pop} popCap={snap.popCap} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <IdleBadge count={snap.idleCount} />
+          <IdleBadge count={snap.idleCount} onClick={cycleIdle} />
           <Clock />
           <AgeProgress age={ageView(snap)} onAdvance={() => dispatch({ type: 'advanceAge', player: HUMAN })} />
           <button
