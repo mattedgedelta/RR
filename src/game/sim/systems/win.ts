@@ -1,11 +1,11 @@
 /**
  * win.ts — elimination and match resolution.
  *
- * A player is eliminated when it has no complete production building left (its
- * Spire / Legion Hall / Kennel — anything that trains units); without one it
- * can't reinforce, so it's out. When only one team remains standing (FFA = one
- * player), or the human falls, the match ends and `world.outcome` is written
- * from the human's point of view. The GameLoop stops ticking once outcome is set.
+ * A player is eliminated only once it has NO units left (all military + workers
+ * destroyed) AND no building that can still produce pioneers (its Spire) — i.e.
+ * no army and no way to rebuild a workforce. When only one team remains standing
+ * (FFA = one player), or the human falls, the match ends and `world.outcome` is
+ * written from the human's point of view. The GameLoop halts once it's set.
  */
 import { BUILDINGS } from '../../data/buildings'
 import type { PlayerId } from '../../data/players'
@@ -16,7 +16,7 @@ export function runWin(world: World): void {
 
   for (const p of world.players) {
     if (p.defeated) continue
-    if (!hasProduction(world, p.id)) {
+    if (!isAlive(world, p.id)) {
       p.defeated = true
       world.events.push({ type: 'playerDefeated', player: p.id })
     }
@@ -33,10 +33,13 @@ export function runWin(world: World): void {
   }
 }
 
-/** True if the player still has a complete unit-producing building. */
-function hasProduction(world: World, owner: PlayerId): boolean {
+/** Alive while the player has any unit, or a complete pioneer-producing building. */
+function isAlive(world: World, owner: PlayerId): boolean {
+  for (const u of world.units.values()) {
+    if (u.owner === owner) return true
+  }
   for (const b of world.buildings.values()) {
-    if (b.owner === owner && b.state === 'complete' && BUILDINGS[b.kind].produces.length > 0) {
+    if (b.owner === owner && b.state === 'complete' && BUILDINGS[b.kind].produces.includes('pioneer')) {
       return true
     }
   }

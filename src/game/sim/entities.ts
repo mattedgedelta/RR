@@ -43,6 +43,11 @@ export type UnitOrder =
   | 'attack'
   | 'build'
 
+/** Combat stance — how a unit reacts to nearby enemies when not under orders.
+ *  aggressive: chase enemies in LOS · hold: attack only in range, never move ·
+ *  passive: never auto-engage (attack only when explicitly ordered). */
+export type UnitStance = 'aggressive' | 'hold' | 'passive'
+
 export type GatherPhase = 'toNode' | 'gathering' | 'toDropOff' | 'depositing'
 
 export interface GatherState {
@@ -80,6 +85,8 @@ export interface Unit {
   gather: GatherState | null
   /** Building under construction this worker is assigned to. */
   buildTargetId: EntityId | null
+  /** Combat stance (military units; workers default passive). */
+  stance: UnitStance
   /** Population slots this unit consumes. */
   pop: number
 }
@@ -177,6 +184,7 @@ export function spawnUnit(
     cooldown: 0,
     gather: null,
     buildTargetId: null,
+    stance: def.canGather ? 'passive' : 'aggressive',
     pop: def.pop,
   }
   world.units.set(unit.id, unit)

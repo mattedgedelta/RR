@@ -19,6 +19,7 @@ export type BuildingKind =
   | 'spire'
   | 'legionHall'
   | 'granary'
+  | 'farm'
   | 'exchange'
   | 'forge'
   | 'kennel'
@@ -104,6 +105,26 @@ export const BUILDINGS: Record<BuildingKind, BuildingDef> = {
     dropOff: ['grain', 'ore'],
     popProvided: 10,
     requiredAge: 'bondsman',
+    defensive: false,
+    unique: false,
+  },
+  farm: {
+    kind: 'farm',
+    label: 'farm',
+    hp: 300,
+    // A small (1×1) plot a Pioneer works: a renewable grain source the worker
+    // harvests and carries back to a drop-off (Spire / Granary).
+    footprint: { w: 1, h: 1 },
+    meleeArmor: 0,
+    pierceArmor: 0,
+    los: 2,
+    cost: { grain: 60 },
+    buildTime: 18,
+    produces: [],
+    garrisonCap: 0,
+    dropOff: [],
+    popProvided: 0,
+    requiredAge: 'initiate',
     defensive: false,
     unique: false,
   },
@@ -226,6 +247,7 @@ export const BUILDING_ICON: Record<BuildingKind, IconName> = {
   spire: 'home',
   legionHall: 'swords',
   granary: 'leaf',
+  farm: 'leaf',
   exchange: 'coins',
   forge: 'hammer',
   kennel: 'crosshair',

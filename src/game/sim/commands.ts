@@ -10,14 +10,14 @@
 import type { UnitKind } from '../data/units'
 import type { BuildingKind } from '../data/buildings'
 import type { PlayerId } from '../data/players'
-import type { Cost } from '../data/resources'
+import type { Cost, ResourceKind } from '../data/resources'
 import { UNITS } from '../data/units'
 import { BUILDINGS } from '../data/buildings'
 import { canAfford, addCost } from '../data/resources'
 import { AGES, ageAtLeast } from '../data/ages'
 import { HOUSES } from '../data/houses'
 import { footprintBuildable } from './map'
-import { placeBuilding, type EntityId, type Building, type Unit, type Vec2 } from './entities'
+import { placeBuilding, type EntityId, type Building, type Unit, type Vec2, type UnitStance } from './entities'
 import {
   type World,
   type Player,
@@ -37,6 +37,8 @@ export type Command =
   | { type: 'train'; player: PlayerId; buildingId: EntityId; unit: UnitKind; count?: number }
   | { type: 'cancelTrain'; player: PlayerId; buildingId: EntityId; index: number }
   | { type: 'setRally'; player: PlayerId; buildingId: EntityId; x: number; y: number }
+  | { type: 'setStance'; player: PlayerId; unitIds: EntityId[]; stance: UnitStance }
+  | { type: 'delete'; player: PlayerId; ids: EntityId[] }
   | { type: 'advanceAge'; player: PlayerId }
 
 /** Enqueue a command for application at the next tick. */
@@ -124,21 +126,38 @@ function apply(world: World, cmd: Command): void {
       break
     }
     case 'gather': {
+      // Target may be a resource node OR one of the player's own Farms (a
+      // renewable grain source the worker harvests and carries to a drop-off).
       const node = getResource(world, cmd.nodeId)
-      if (!node) break
+      let resource: ResourceKind | null = null
+      let gx = 0
+      let gy = 0
+      if (node) {
+        resource = node.resource
+        gx = node.x + 0.5
+        gy = node.y + 0.5
+      } else {
+        const farm = getBuilding(world, cmd.nodeId)
+        if (farm && farm.kind === 'farm' && farm.owner === cmd.player) {
+          resource = 'grain'
+          gx = farm.x + farm.w / 2
+          gy = farm.y + farm.h / 2
+        }
+      }
+      if (resource == null) break
       for (const u of ownedUnits(world, cmd.player, cmd.unitIds)) {
         if (!UNITS[u.kind].canGather) continue
         clearJob(u)
         u.order = 'gather'
         u.gather = {
-          resource: node.resource,
-          nodeId: node.id,
+          resource,
+          nodeId: cmd.nodeId,
           carrying: 0,
           capacity: 10,
           phase: 'toNode',
           dropOffId: null,
         }
-        u.moveGoal = { x: node.x + 0.5, y: node.y + 0.5 }
+        u.moveGoal = { x: gx, y: gy }
         u.path = null
       }
       break
@@ -210,6 +229,23 @@ function apply(world: World, cmd: Command): void {
       const b = getBuilding(world, cmd.buildingId)
       if (!b || b.owner !== cmd.player) break
       b.rally = { x: cmd.x, y: cmd.y }
+      break
+    }
+    case 'setStance': {
+      for (const u of ownedUnits(world, cmd.player, cmd.unitIds)) u.stance = cmd.stance
+      break
+    }
+    case 'delete': {
+      // Self-destruct owned units/buildings; cleanup() reclaims pop/cap/tiles.
+      for (const id of cmd.ids) {
+        const u = world.units.get(id)
+        if (u && u.owner === cmd.player) {
+          u.hp = 0
+          continue
+        }
+        const b = world.buildings.get(id)
+        if (b && b.owner === cmd.player) b.hp = 0
+      }
       break
     }
     case 'advanceAge': {

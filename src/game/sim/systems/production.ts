@@ -10,8 +10,9 @@
  */
 import { UNITS } from '../../data/units'
 import { HOUSES } from '../../data/houses'
-import { findNearestTile, isPassable } from '../map'
-import { spawnUnit, type Building } from '../entities'
+import { findNearestTile, isPassable, tileAt } from '../map'
+import { spawnUnit, DEFAULT_CARRY_CAPACITY, type Building, type Unit } from '../entities'
+import type { ResourceKind } from '../../data/resources'
 import type { World } from '../world'
 
 export function runProduction(world: World): void {
@@ -32,12 +33,49 @@ export function runProduction(world: World): void {
 
     const u = spawnUnit(world, head.unit, b.owner, spot.x + 0.5, spot.y + 0.5)
     b.queue.shift()
-    if (b.rally) {
-      u.order = 'move'
-      u.moveGoal = { x: b.rally.x, y: b.rally.y }
-      u.path = null
-    }
+    if (b.rally) rallyUnit(world, u, b)
   }
+}
+
+/** Send a freshly spawned unit to its building's rally point — and if the rally
+ *  sits on a resource (or own Farm) and the unit can gather, put it to work. */
+function rallyUnit(world: World, u: Unit, b: Building): void {
+  const rally = b.rally!
+  const target = UNITS[u.kind].canGather ? gatherTargetAt(world, b.owner, rally.x, rally.y) : null
+  if (target) {
+    u.order = 'gather'
+    u.gather = {
+      resource: target.resource,
+      nodeId: target.id,
+      carrying: 0,
+      capacity: DEFAULT_CARRY_CAPACITY,
+      phase: 'toNode',
+      dropOffId: null,
+    }
+    u.moveGoal = { x: target.cx, y: target.cy }
+  } else {
+    u.order = 'move'
+    u.moveGoal = { x: rally.x, y: rally.y }
+  }
+  u.path = null
+}
+
+/** A gatherable at tile (x,y): a resource node, or one of the owner's Farms. */
+function gatherTargetAt(
+  world: World,
+  owner: number,
+  x: number,
+  y: number,
+): { id: number; resource: ResourceKind; cx: number; cy: number } | null {
+  const t = tileAt(world.map, Math.floor(x), Math.floor(y))
+  if (!t || t.occupantId == null) return null
+  const node = world.resources.get(t.occupantId)
+  if (node && node.amount > 0) return { id: node.id, resource: node.resource, cx: node.x + 0.5, cy: node.y + 0.5 }
+  const farm = world.buildings.get(t.occupantId)
+  if (farm && farm.kind === 'farm' && farm.owner === owner) {
+    return { id: farm.id, resource: 'grain', cx: farm.x + farm.w / 2, cy: farm.y + farm.h / 2 }
+  }
+  return null
 }
 
 /** Nearest passable tile to the building's centre (units don't occupy tiles). */
