@@ -232,7 +232,7 @@ export function createWorld(seed: number, config: MatchConfig): World {
     for (const off of PIONEER_OFFSETS) {
       const px = Math.max(0.5, Math.min(map.width - 0.5, sx + off.dx))
       const py = Math.max(0.5, Math.min(map.height - 0.5, sy + off.dy))
-      spawnUnit(world, 'pioneer', player.id, px, py)
+      spawnUnit(world, 'red', player.id, px, py)
     }
 
     // Resource cluster.

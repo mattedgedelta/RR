@@ -28,6 +28,13 @@ export function runCombat(world: World): void {
 function fight(world: World, u: Unit, alerted: Set<number>): void {
   const def = UNITS[u.kind]
 
+  // Non-combatant castes (medicus / scout) never engage, even if ordered.
+  if (!def.canFight) {
+    u.attackTargetId = null
+    if (u.order === 'attack') u.order = 'idle'
+    return
+  }
+
   // Resolve / validate the current target.
   let target = u.attackTargetId != null ? getEntity(world, u.attackTargetId) : undefined
   if (target && (target.etype === 'resource' || areAllied(world, u.owner, target.owner))) {

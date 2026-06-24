@@ -41,16 +41,16 @@ export const FIXTURE_SELECTION: SelectionView = {
     { label: 'los', value: '8' },
   ],
   production: {
-    unit: 'pioneer',
+    unit: 'red',
     progress01: 0.46,
     queueLen: 3,
     etaSec: 12,
-    queue: ['pioneer', 'pioneer', 'pioneer'],
+    queue: ['red', 'red', 'red'],
   },
 }
 
 export const FIXTURE_COMMANDS: (CommandSlot | null)[] = [
-  { hotkey: 'Q', label: 'train_pioneer', icon: 'users', cost: { grain: 50 } },
+  { hotkey: 'Q', label: 'train_red', icon: 'users', cost: { grain: 50 } },
   { hotkey: 'W', label: 'set_rally', icon: 'crosshair' },
   null,
   { hotkey: 'R', label: 'advance_peerless', icon: 'chevronRight', variant: 'primary' },

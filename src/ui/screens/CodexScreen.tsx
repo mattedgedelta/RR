@@ -22,7 +22,7 @@ import { useHotkeys } from '@/ui/hooks/useHotkeys'
 type Category = 'houses' | 'units' | 'buildings' | 'tech'
 const CATEGORIES: Category[] = ['houses', 'units', 'buildings', 'tech']
 
-const UNIT_ORDER: UnitKind[] = ['pioneer', 'obsidian', 'howler']
+const UNIT_ORDER: UnitKind[] = ['red', 'gray', 'obsidian', 'gold', 'yellow', 'blue', 'howler']
 const BUILDING_ORDER: BuildingKind[] = [
   'spire',
   'legionHall',
@@ -204,7 +204,7 @@ function BuildingDetail({ kind }: { kind: BuildingKind }) {
       </Grid>
       {kind === 'farm' && (
         <div style={{ fontSize: 11, color: FC.accent }}>
-          renewable grain — assign a pioneer to harvest (drops off at spire / granary)
+          renewable grain — assign a red to harvest (drops off at spire / granary)
         </div>
       )}
       <SectionLabel>trains</SectionLabel>

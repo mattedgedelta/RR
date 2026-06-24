@@ -186,7 +186,7 @@ function apply(world: World, cmd: Command): void {
       const b = placeBuilding(world, cmd.building, cmd.player, cmd.x, cmd.y, false)
       const goal = center(b)
       for (const u of ownedUnits(world, cmd.player, cmd.builderIds)) {
-        if (!UNITS[u.kind].canGather) continue // only workers build
+        if (!UNITS[u.kind].canBuild) continue // only builder castes build
         clearJob(u)
         u.order = 'build'
         u.buildTargetId = b.id

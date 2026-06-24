@@ -39,7 +39,7 @@ function isAlive(world: World, owner: PlayerId): boolean {
     if (u.owner === owner) return true
   }
   for (const b of world.buildings.values()) {
-    if (b.owner === owner && b.state === 'complete' && BUILDINGS[b.kind].produces.includes('pioneer')) {
+    if (b.owner === owner && b.state === 'complete' && BUILDINGS[b.kind].produces.includes('red')) {
       return true
     }
   }

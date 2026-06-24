@@ -184,7 +184,7 @@ export function spawnUnit(
     cooldown: 0,
     gather: null,
     buildTargetId: null,
-    stance: def.canGather ? 'passive' : 'aggressive',
+    stance: !def.canFight ? 'passive' : def.canGather ? 'hold' : 'aggressive',
     pop: def.pop,
   }
   world.units.set(unit.id, unit)
