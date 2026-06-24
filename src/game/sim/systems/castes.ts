@@ -8,9 +8,12 @@
  *                player's grain stockpile is drained by the per-tick share. If
  *                grain can't cover it, the stockpile floors at 0 and the player
  *                is flagged `starving` (hard food — there is no soft buffer).
- *  2. STARVE   — while starving, every one of that player's units loses HP. The
- *                weakest (Reds) die first, which lowers upkeep, so the army
- *                shrinks toward what its grain economy can actually feed.
+ *  2. STARVE   — while starving, the player's NON-LABOR units (everything but
+ *                Reds) lose HP. Hungry soldiers, scouts and medics waste away
+ *                first, shrinking upkeep back toward what the grain economy can
+ *                feed — while the Reds who actually gather are spared, so a bad
+ *                food balance costs you your army, not your whole base. Laborer
+ *                upkeep is tiny and self-funding, so a pure economy never starves.
  *  3. HEAL     — each Yellow (medicus) restores HP to nearby friendly units.
  *                This also offsets starvation attrition for units near a Yellow,
  *                which is how a medicus "eases famine" without special-casing.
@@ -43,10 +46,11 @@ export function runCastes(world: World): void {
     }
   }
 
-  // ── 2. starvation attrition (cleanup() culls anything that hits 0) ──
+  // ── 2. starvation attrition — army only, sparing the laborers (cleanup()
+  //       culls anything that hits 0) ──
   const starve = STARVE_PER_MIN * perTick
   for (const u of world.units.values()) {
-    if (world.players[u.owner].starving) u.hp -= starve
+    if (world.players[u.owner].starving && !UNITS[u.kind].canGather) u.hp -= starve
   }
 
   // ── 3. Yellow healing (few medics, so the nested scan is cheap) ──
