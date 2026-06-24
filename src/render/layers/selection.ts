@@ -24,6 +24,24 @@ export const drawSelection: DrawLayer = ({ ctx, cam, snap, selected }) => {
       bracket(ctx, x + w, y, -len, len) // TR
       bracket(ctx, x, y + h, len, -len) // BL
       bracket(ctx, x + w, y + h, -len, -len) // BR
+      // Rally line + marker for a selected production building.
+      if (e.rally) {
+        const cx = (e.x + e.w / 2) * TILE
+        const cy = (e.y + e.h / 2) * TILE
+        const rx = e.rally.x * TILE
+        const ry = e.rally.y * TILE
+        ctx.save()
+        ctx.setLineDash([5 / cam.zoom, 4 / cam.zoom])
+        ctx.beginPath()
+        ctx.moveTo(cx, cy)
+        ctx.lineTo(rx, ry)
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.beginPath()
+        ctx.arc(rx, ry, TILE * 0.22, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.restore()
+      }
     } else if (e.etype === 'resource') {
       // Diamond outline around the node tile.
       const cx = (e.x + 0.5) * TILE

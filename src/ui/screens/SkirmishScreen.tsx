@@ -16,7 +16,7 @@ import { dispatch, gameStore, useGameValue } from '@/game/store'
 import { settingsStore } from '@/game/settings'
 import { Camera } from '@/render/Camera'
 import { createViewState, type ViewState } from '@/render/types'
-import type { EntityId } from '@/game/sim/entities'
+import type { EntityId, UnitStance } from '@/game/sim/entities'
 import type { MatchConfig } from '@/game/data/players'
 import type { UnitKind } from '@/game/data/units'
 import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
@@ -105,7 +105,7 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
   const houseBadge = HOUSES[config.players[HUMAN].house].name
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selection = projectSelection(snap, selectedSet, houseBadge)
-  const slots = commandSlots(snap, selectedSet, snap.age, config.players[HUMAN].house)
+  const slots = commandSlots(snap, selectedSet, snap.age, config.players[HUMAN].house, snap.resources)
   const selectedBuildingId = snap.entities.find(
     (e) => selectedSet.has(e.id) && e.etype === 'building' && e.owner === HUMAN,
   )?.id
@@ -153,9 +153,17 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       const kind = slot.label.slice(6) as BuildingKind
       const fp = BUILDINGS[kind].footprint
       view.placement = { kind, w: fp.w, h: fp.h } // Viewport commits on a valid click
+    } else if (slot.label.startsWith('stance_')) {
+      dispatch({ type: 'setStance', player: HUMAN, unitIds: selectedIds, stance: slot.label.slice(7) as UnitStance })
     } else if (slot.label === 'stop') {
       dispatch({ type: 'stop', player: HUMAN, unitIds: selectedIds })
     }
+  }
+
+  const deleteSelection = (): void => {
+    if (selectedIds.length === 0) return
+    dispatch({ type: 'delete', player: HUMAN, ids: selectedIds })
+    clearSelection()
   }
 
   // Control groups: Ctrl+1..9 assigns the selection, 1..9 reselects it.
@@ -184,6 +192,8 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       else if (selectedIds.length) clearSelection()
       else onExit()
     },
+    delete: deleteSelection,
+    backspace: deleteSelection,
   }
   for (let n = 1; n <= 9; n++) {
     keymap[String(n)] = () => selectGroup(String(n))
@@ -261,15 +271,18 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
         )}
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar — fixed height so a building's queue strip never shifts it */}
       <div
         style={{
           display: 'flex',
-          alignItems: 'stretch',
+          alignItems: 'flex-start',
           gap: 12,
           padding: 12,
+          height: 212,
+          boxSizing: 'border-box',
           background: FC.rail,
           borderTop: `1px solid ${FC.border}`,
+          overflow: 'hidden',
         }}
       >
         <MinimapPanel

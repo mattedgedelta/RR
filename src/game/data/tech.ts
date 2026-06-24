@@ -23,6 +23,7 @@ export type TechId =
   | 'spire'
   | 'legionHall'
   | 'granary'
+  | 'farm'
   | 'exchange'
   | 'forge'
   | 'kennel'
@@ -99,6 +100,17 @@ export const TECH_NODES: Record<TechId, TechNode> = {
     time: 0,
     unique: false,
     unlocksBuilding: 'granary',
+  },
+  farm: {
+    id: 'farm',
+    label: 'farm',
+    age: 'initiate',
+    kind: 'building',
+    prereqs: ['granary'],
+    cost: {},
+    time: 0,
+    unique: false,
+    unlocksBuilding: 'farm',
   },
   // ── Initiate ──
   exchange: {
@@ -242,7 +254,7 @@ export const HOUSE_SIGNATURE: Record<HouseId, TechId> = {
  *  House signature (`HOUSE_SIGNATURE`), appended per-House by the TechTree. */
 export const TECH_BY_AGE: Record<AgeId, TechId[]> = {
   bondsman: ['spire', 'legionHall', 'granary'],
-  initiate: ['exchange', 'forge', 'kennel'],
+  initiate: ['exchange', 'forge', 'kennel', 'farm'],
   peerless: ['citadel', 'institute', 'howler'],
   sovereign: ['olympus', 'olympicKnight'],
 }

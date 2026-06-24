@@ -4,9 +4,20 @@
  * production readout when the entity is training. Empty state when nothing is
  * selected.
  */
-import { Icon } from '@/theme/icons'
-import { FC, FONT } from '@/theme/palette'
+import { Icon, type IconName } from '@/theme/icons'
+import { FC, FONT, RESOURCE } from '@/theme/palette'
 import { UNIT_ICON, type UnitKind } from '@/game/data/units'
+import { BUILDING_ICON, type BuildingKind } from '@/game/data/buildings'
+
+const iconForKind = (kind: string): IconName =>
+  kind in UNIT_ICON ? UNIT_ICON[kind as UnitKind] : BUILDING_ICON[kind as BuildingKind]
+
+const GATHER_PHASE: Record<string, string> = {
+  toNode: 'heading to',
+  gathering: 'gathering',
+  toDropOff: 'returning',
+  depositing: 'depositing',
+}
 import { Panel } from '@/ui/common/Panel'
 import { Badge } from '@/ui/common/Badge'
 import { Bar } from '@/ui/common/Bar'
@@ -60,6 +71,37 @@ export function SelectionPanel({ selection, onCancelQueue }: SelectionPanelProps
         <div style={{ display: 'flex', gap: 18 }}>
           {selection.stats.map((s) => (
             <StatCell key={s.label} stat={s} />
+          ))}
+        </div>
+      )}
+
+      {selection.gather && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 11 }}>
+            <span style={{ color: FC.textDim }}>
+              {GATHER_PHASE[selection.gather.phase] ?? selection.gather.phase} {selection.gather.resource}
+            </span>
+            <span style={{ color: FC.text3 }}>{Math.round(selection.gather.progress01 * 100)}%</span>
+          </div>
+          <Bar
+            value={selection.gather.progress01}
+            color={RESOURCE[selection.gather.resource as keyof typeof RESOURCE] ?? FC.accent}
+            height={5}
+          />
+        </div>
+      )}
+
+      {selection.composition && selection.composition.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {selection.composition.map((c) => (
+            <div
+              key={c.kind}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 11, color: FC.text3 }}
+            >
+              <Icon name={iconForKind(c.kind)} size={13} color={FC.text3} />
+              <span style={{ flex: 1 }}>{c.kind}</span>
+              <span style={{ color: FC.text }}>×{c.count}</span>
+            </div>
           ))}
         </div>
       )}

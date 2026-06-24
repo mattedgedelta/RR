@@ -60,6 +60,10 @@ export interface SelectionView {
   badge?: string
   stats: SelectionStat[]
   production?: ProductionView | null
+  /** Multi-select breakdown (kind → count). */
+  composition?: { kind: string; count: number }[]
+  /** Active gather job for a selected worker (carry fill + phase). */
+  gather?: { resource: string; progress01: number; phase: string }
 }
 
 export interface CommandSlot {
@@ -68,4 +72,6 @@ export interface CommandSlot {
   icon?: IconName
   variant?: 'default' | 'primary' | 'disabled'
   cost?: Cost
+  /** False when the player can't currently afford `cost` (cost shown in red). */
+  affordable?: boolean
 }

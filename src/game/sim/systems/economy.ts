@@ -38,37 +38,65 @@ export function runEconomy(world: World): void {
   for (const p of world.players) p.rateTracker.tick()
 }
 
+/** A harvest source: a depleting resource node, or a renewable Farm building.
+ *  `take` returns how much is actually harvested (and depletes a node). */
+interface GatherSource {
+  cx: number
+  cy: number
+  take: (want: number) => number
+}
+
+function sourceOf(world: World, id: number | null, owner: number): GatherSource | undefined {
+  if (id == null) return undefined
+  const node = world.resources.get(id)
+  if (node && node.amount > 0) {
+    return {
+      cx: node.x + 0.5,
+      cy: node.y + 0.5,
+      take: (want) => {
+        const t = Math.min(want, node.amount)
+        node.amount -= t
+        return t
+      },
+    }
+  }
+  const b = world.buildings.get(id)
+  if (b && b.kind === 'farm' && b.owner === owner && b.state === 'complete') {
+    return { cx: b.x + b.w / 2, cy: b.y + b.h / 2, take: (want) => want } // renewable
+  }
+  return undefined
+}
+
 function runGather(world: World, u: Unit, g: GatherState): void {
   const player = world.players[u.owner]
   switch (g.phase) {
     case 'toNode': {
-      const node = nodeOf(world, g.nodeId)
-      if (!node) {
+      const src = sourceOf(world, g.nodeId, u.owner)
+      if (!src) {
         retargetNode(world, u, g)
         return
       }
-      if (distTo(u, node.x + 0.5, node.y + 0.5) <= GATHER_RANGE) {
+      if (distTo(u, src.cx, src.cy) <= GATHER_RANGE) {
         g.phase = 'gathering'
         u.moveGoal = null
         u.path = null
       } else if (!u.moveGoal) {
-        sendTo(u, node.x + 0.5, node.y + 0.5)
+        sendTo(u, src.cx, src.cy)
       }
       break
     }
 
     case 'gathering': {
-      const node = nodeOf(world, g.nodeId)
-      if (!node) {
-        if (g.carrying > 0 && !startDropOff(world, u, g)) goIdle(u)
-        else if (!node) retargetNode(world, u, g)
+      const src = sourceOf(world, g.nodeId, u.owner)
+      if (!src) {
+        if (g.carrying > 0 && !startDropOff(world, u, g)) retargetNode(world, u, g)
+        else if (g.carrying === 0) retargetNode(world, u, g)
         return
       }
       const mul = HOUSES[player.house].modifiers.gatherRate ?? 1
-      const want = Math.min(GATHER_PER_TICK * mul, g.capacity - g.carrying, node.amount)
-      g.carrying += want
-      node.amount -= want
-      if (g.carrying >= g.capacity - 1e-6 || node.amount <= 0) {
+      const got = src.take(Math.min(GATHER_PER_TICK * mul, g.capacity - g.carrying))
+      g.carrying += got
+      if (g.carrying >= g.capacity - 1e-6 || got <= 0) {
         if (!startDropOff(world, u, g)) goIdle(u)
       }
       break
@@ -96,10 +124,10 @@ function runGather(world: World, u: Unit, g: GatherState): void {
         player.rateTracker.record(g.resource, g.carrying)
         g.carrying = 0
       }
-      const node = nodeOf(world, g.nodeId)
-      if (node) {
+      const src = sourceOf(world, g.nodeId, u.owner)
+      if (src) {
         g.phase = 'toNode'
-        sendTo(u, node.x + 0.5, node.y + 0.5)
+        sendTo(u, src.cx, src.cy)
       } else {
         retargetNode(world, u, g)
       }
@@ -109,12 +137,6 @@ function runGather(world: World, u: Unit, g: GatherState): void {
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────
-
-function nodeOf(world: World, id: number | null): ResourceNode | undefined {
-  if (id == null) return undefined
-  const n = world.resources.get(id)
-  return n && n.amount > 0 ? n : undefined
-}
 
 function buildingOf(world: World, id: number | null, owner: number): Building | undefined {
   if (id == null) return undefined

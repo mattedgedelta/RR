@@ -10,6 +10,7 @@ import { BUILDINGS, BUILDING_ICON, type BuildingKind } from '@/game/data/buildin
 import { UNITS, UNIT_ICON, type UnitKind } from '@/game/data/units'
 import { AGES, ageAtLeast, type AgeId } from '@/game/data/ages'
 import { HOUSES, type HouseId } from '@/game/data/houses'
+import { canAfford, type ResourceBag } from '@/game/data/resources'
 import type { Snapshot } from '@/game/sim/snapshot'
 import type { ResourceItem, AgeView, SelectionView, SelectionStat, CommandSlot } from './types'
 
@@ -51,6 +52,8 @@ export function projectSelection(
   if (ents.length === 0) return null
 
   if (ents.length > 1) {
+    const counts = new Map<string, number>()
+    for (const e of ents) counts.set(e.kind, (counts.get(e.kind) ?? 0) + 1)
     return {
       name: `${ents.length}_selected`,
       owner: ents[0].owner,
@@ -58,6 +61,7 @@ export function projectSelection(
       maxHp: 0,
       stats: [],
       production: null,
+      composition: [...counts].map(([kind, count]) => ({ kind, count })),
     }
   }
 
@@ -95,7 +99,18 @@ export function projectSelection(
       { label: 'attack', value: String(def.attack) },
       { label: 'los', value: String(def.los) },
     ]
-    return { name: def.label, owner: e.owner, hp: Math.round(e.hp01 * def.hp), maxHp: def.hp, badge, stats, production: null }
+    return {
+      name: def.label,
+      owner: e.owner,
+      hp: Math.round(e.hp01 * def.hp),
+      maxHp: def.hp,
+      badge,
+      stats,
+      production: null,
+      gather: e.gather
+        ? { resource: e.gather.resource, progress01: e.gather.carry01, phase: e.gather.phase }
+        : undefined,
+    }
   }
 
   if (e.etype === 'resource') {
@@ -117,13 +132,15 @@ export function projectSelection(
 
 const SLOT_KEYS = ['Q', 'W', 'E', 'R', 'A', 'S', 'D', 'F']
 
-/** Command grid for the selection: a building's train options + [R] advance, or
- *  a stop action for units. (Build-placement lands in Phase 9.) */
+/** Command grid for the selection: a building's train/advance options, a
+ *  worker's build menu, or a military unit's stance controls. `resources` drives
+ *  the affordability flag (cost shown red when you can't pay). */
 export function commandSlots(
   snap: Snapshot,
   ids: ReadonlySet<number>,
   age: AgeId,
   house: HouseId,
+  resources: ResourceBag,
 ): (CommandSlot | null)[] {
   const slots: (CommandSlot | null)[] = Array(8).fill(null)
   const ents = snap.entities.filter((e) => ids.has(e.id) && e.owner === HUMAN)
@@ -143,12 +160,20 @@ export function commandSlots(
         icon: UNIT_ICON[u],
         cost: ud.cost,
         variant: ageAtLeast(age, ud.requiredAge) && !lockedUnique ? 'default' : 'disabled',
+        affordable: canAfford(resources, ud.cost),
       }
     })
     if (building.kind === 'spire') {
       const adv = AGES[age].advance
       if (adv) {
-        slots[3] = { hotkey: 'R', label: `advance_${adv.to}`, icon: 'chevronRight', variant: 'primary' }
+        slots[3] = {
+          hotkey: 'R',
+          label: `advance_${adv.to}`,
+          icon: 'chevronRight',
+          variant: 'primary',
+          cost: adv.cost,
+          affordable: canAfford(resources, adv.cost),
+        }
       }
     }
     return slots
@@ -165,6 +190,7 @@ export function commandSlots(
         label: `build_${kind}`,
         icon: BUILDING_ICON[kind],
         cost: BUILDINGS[kind].cost,
+        affordable: canAfford(resources, BUILDINGS[kind].cost),
       }
       i++
     }
@@ -172,8 +198,14 @@ export function commandSlots(
     return slots
   }
 
+  // Military units → stop + stance controls (highlight the shared stance).
   if (ents.some((e) => e.etype === 'unit')) {
+    const stances = new Set(ents.filter((e) => e.etype === 'unit').map((e) => e.stance))
+    const cur = stances.size === 1 ? [...stances][0] : undefined
     slots[0] = { hotkey: 'Q', label: 'stop', icon: 'x' }
+    slots[1] = { hotkey: 'W', label: 'stance_aggressive', icon: 'swords', variant: cur === 'aggressive' ? 'primary' : 'default' }
+    slots[2] = { hotkey: 'E', label: 'stance_hold', icon: 'shield', variant: cur === 'hold' ? 'primary' : 'default' }
+    slots[3] = { hotkey: 'R', label: 'stance_passive', icon: 'pause', variant: cur === 'passive' ? 'primary' : 'default' }
   }
   return slots
 }
@@ -182,6 +214,7 @@ export function commandSlots(
 const BUILD_MENU: BuildingKind[] = [
   'legionHall',
   'granary',
+  'farm',
   'exchange',
   'forge',
   'kennel',

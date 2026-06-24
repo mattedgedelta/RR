@@ -96,6 +96,9 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
       const ids = [...view.selected]
       if (hit?.etype === 'resource') {
         dispatch({ type: 'gather', player: HUMAN, unitIds: ids, nodeId: hit.id })
+      } else if (hit?.etype === 'building' && hit.owner === HUMAN && hit.kind === 'farm') {
+        // Assign workers to harvest an own Farm.
+        dispatch({ type: 'gather', player: HUMAN, unitIds: ids, nodeId: hit.id })
       } else if (hit && hit.owner !== HUMAN) {
         dispatch({ type: 'attack', player: HUMAN, unitIds: ids, targetId: hit.id })
       } else {

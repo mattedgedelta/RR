@@ -20,6 +20,7 @@ export function CommandButton({ slot, onClick }: { slot: CommandSlot | null; onC
 
   const primary = slot.variant === 'primary'
   const disabled = slot.variant === 'disabled'
+  const unaffordable = slot.affordable === false
   const fg = disabled ? FC.textFaint : primary ? FC.accent : FC.text3
   // Drop the action verb (icon conveys it) and render lowercase_snake.
   const label = slot.label
@@ -44,7 +45,7 @@ export function CommandButton({ slot, onClick }: { slot: CommandSlot | null; onC
         borderRadius: 6,
         cursor: disabled ? 'not-allowed' : 'pointer',
         background: primary ? FC.borderFaint : FC.card,
-        border: `1px solid ${primary ? FC.borderActive : FC.border}`,
+        border: `1px solid ${unaffordable && !disabled ? FC.error : primary ? FC.borderActive : FC.border}`,
         color: fg,
         opacity: disabled ? 0.5 : 1,
         overflow: 'hidden',
@@ -69,7 +70,7 @@ export function CommandButton({ slot, onClick }: { slot: CommandSlot | null; onC
       {costs.length > 0 && (
         <span style={{ display: 'flex', gap: 4, fontFamily: FONT.mono, fontSize: 8 }}>
           {costs.map((c) => (
-            <span key={c.k} style={{ color: c.color }}>
+            <span key={c.k} style={{ color: unaffordable ? FC.error : c.color }}>
               {c.v}
             </span>
           ))}

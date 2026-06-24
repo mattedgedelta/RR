@@ -27,6 +27,7 @@ const BUILDING_ORDER: BuildingKind[] = [
   'spire',
   'legionHall',
   'granary',
+  'farm',
   'exchange',
   'forge',
   'kennel',
@@ -201,6 +202,11 @@ function BuildingDetail({ kind }: { kind: BuildingKind }) {
         <StatTile label="garrison" value={b.garrisonCap || '—'} />
         <StatTile label="drop_off" value={drop} />
       </Grid>
+      {kind === 'farm' && (
+        <div style={{ fontSize: 11, color: FC.accent }}>
+          renewable grain — assign a pioneer to harvest (drops off at spire / granary)
+        </div>
+      )}
       <SectionLabel>trains</SectionLabel>
       <div style={{ fontSize: 12, color: FC.text2 }}>
         {b.produces.length ? b.produces.map((u) => UNITS[u].label).join(' · ') : '—'}

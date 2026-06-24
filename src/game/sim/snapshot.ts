@@ -5,7 +5,7 @@
  * human (player 0) plus a flat render list of every entity. Keeping this a pure
  * projection means the renderer/HUD never reach into mutable sim state.
  */
-import type { ResourceBag } from '../data/resources'
+import type { ResourceBag, ResourceKind } from '../data/resources'
 import type { AgeId } from '../data/ages'
 import type { UnitKind } from '../data/units'
 import type { Cost } from '../data/resources'
@@ -13,7 +13,7 @@ import { AGES } from '../data/ages'
 import { RESOURCE_META, emptyBag } from '../data/resources'
 import { UNITS } from '../data/units'
 import { BUILDINGS } from '../data/buildings'
-import type { EntityType, BuildingState, UnitOrder } from './entities'
+import type { EntityType, BuildingState, UnitOrder, UnitStance, GatherPhase } from './entities'
 import { type World, TICK_HZ } from './world'
 
 export interface RenderEntity {
@@ -38,10 +38,16 @@ export interface RenderEntity {
   queueLen?: number
   /** Building only: queued unit kinds (head first), for the queue strip. */
   queue?: UnitKind[]
+  /** Building only: rally point (production buildings), for the rally marker. */
+  rally?: { x: number; y: number }
   /** Unit only. */
   order?: UnitOrder
   /** Unit only: the owner's current age index (0..3), for age-tier visuals. */
   ageIndex?: number
+  /** Unit only: combat stance. */
+  stance?: UnitStance
+  /** Unit only: active gather job (carry fill + phase), for the selection panel. */
+  gather?: { resource: ResourceKind; carry01: number; phase: GatherPhase }
   /** Resource node only: remaining fraction + raw amounts. */
   amount01?: number
   amount?: number
@@ -206,6 +212,7 @@ export function buildSnapshot(world: World): Snapshot {
       produceProgress01: head ? 1 - head.remaining / head.total : 0,
       queueLen: b.queue.length,
       queue: b.queue.map((q) => q.unit),
+      rally: b.rally ?? undefined,
     })
   }
 
@@ -225,6 +232,14 @@ export function buildSnapshot(world: World): Snapshot {
       hp01: u.maxHp > 0 ? u.hp / u.maxHp : 0,
       order: u.order,
       ageIndex: AGES[world.players[u.owner].age].index,
+      stance: u.stance,
+      gather: u.gather
+        ? {
+            resource: u.gather.resource,
+            carry01: u.gather.capacity > 0 ? u.gather.carrying / u.gather.capacity : 0,
+            phase: u.gather.phase,
+          }
+        : undefined,
     })
   }
 
