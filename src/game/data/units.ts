@@ -27,6 +27,8 @@ export type UnitRole = 'worker' | 'cavalry' | 'infantry' | 'medicus' | 'scout' |
 export interface UnitDef {
   kind: UnitKind
   label: string
+  /** One-line caste flavor (Codex copy). */
+  blurb: string
   role: UnitRole
   hp: number
   /** Movement speed in tiles per second. */
@@ -64,6 +66,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   red: {
     kind: 'red',
     label: 'red',
+    blurb: 'the labor caste — mines the helium and raises the spires. the backbone of the pyramid; lose your Reds and the whole Society starves.',
     role: 'worker',
     hp: 40,
     speed: 1.1,
@@ -89,6 +92,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   gray: {
     kind: 'gray',
     label: 'gray',
+    blurb: 'the standing legion — disciplined line infantry bred to hold a line and obey. cheap, steady, and expendable.',
     role: 'infantry',
     hp: 70,
     speed: 1.2,
@@ -114,6 +118,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   obsidian: {
     kind: 'obsidian',
     label: 'obsidian',
+    blurb: 'giants of the far pole — heavy shock troops that break a line by walking through it. costly to field and hungrier still to feed.',
     role: 'cavalry',
     hp: 100,
     speed: 1.3,
@@ -139,6 +144,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   gold: {
     kind: 'gold',
     label: 'gold',
+    blurb: 'the ruling caste — peerless commanders whose very presence is the chain of command. each Gold widens the force you can field, and fights like ten.',
     role: 'command',
     hp: 200,
     speed: 1.3,
@@ -164,6 +170,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   yellow: {
     kind: 'yellow',
     label: 'yellow',
+    blurb: 'the medicus caste — keeps the wounded breathing and the starving on their feet. carries no blade; priceless behind a line.',
     role: 'medicus',
     hp: 50,
     speed: 1.2,
@@ -189,6 +196,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   blue: {
     kind: 'blue',
     label: 'blue',
+    blurb: 'pilots and helmsmen — fast eyes that range far ahead and peel back the fog of war. no use in a fight, indispensable before one.',
     role: 'scout',
     hp: 45,
     speed: 2.2,
@@ -214,6 +222,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   howler: {
     kind: 'howler',
     label: 'howler',
+    blurb: "Mars' wolves — masked raiders of the Iron Rain, fast and savage. the war house's own, and no other's to command.",
     role: 'cavalry',
     hp: 80,
     speed: 1.7,

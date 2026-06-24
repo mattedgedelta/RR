@@ -36,6 +36,14 @@ const BUILDING_ORDER: BuildingKind[] = [
   'olympus',
 ]
 
+/** Short Field-Console framing copy shown under each Codex category's tabs. */
+const CATEGORY_INTRO: Partial<Record<Category, string>> = {
+  units:
+    'the Society is a pyramid of Colors, each locked to its caste — Reds labor, Grays and Obsidians hold the line, Golds command, Yellows mend, Blues scout. every unit you train costs command capacity (raised by Golds + buildings) and eats grain upkeep; feed your army or it wastes away. cultivate the mix your strategy needs.',
+  buildings:
+    'structures unlock as you advance ages, and gate the Colors they train. Reds raise them; the Spire is your heart — lose every Spire and producing-building and the House falls.',
+}
+
 function costStr(cost: Cost): string {
   const parts = RESOURCE_KINDS.filter((k) => cost[k]).map((k) => `${cost[k]} ${RESOURCE_META[k].label}`)
   return parts.length ? parts.join(' · ') : 'free'
@@ -87,6 +95,12 @@ export default function CodexScreen({ onBack }: { onBack: () => void }) {
           <Tab key={c} on={cat === c} label={c} onClick={() => pickCategory(c)} />
         ))}
       </div>
+
+      {CATEGORY_INTRO[cat] && (
+        <p style={{ margin: 0, maxWidth: 820, fontSize: 11, lineHeight: 1.7, color: FC.textDim }}>
+          {CATEGORY_INTRO[cat]}
+        </p>
+      )}
 
       {cat === 'tech' ? (
         <Panel title="tech_tree">
@@ -169,6 +183,7 @@ function UnitDetail({ kind }: { kind: UnitKind }) {
         <Badge color={FC.text3}>{u.role}</Badge>
         {u.unique && <Badge color={FC.warn}>unique</Badge>}
       </div>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: FC.text3 }}>{u.blurb}</p>
       <Grid>
         <StatTile label="hp" value={u.hp} />
         <StatTile label="attack" value={u.attack} />

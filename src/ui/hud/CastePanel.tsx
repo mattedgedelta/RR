@@ -21,7 +21,13 @@ export function CastePanel({ view }: { view: CasteView }) {
     <Panel title="caste" style={{ width: 226, boxSizing: 'border-box' }}>
       {/* command capacity */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <Row icon="users" label="command" value={`${command.used}/${command.cap}`} color={cmdColor} />
+        <Row
+          icon="users"
+          label="command"
+          value={`${command.used}/${command.cap}`}
+          color={cmdColor}
+          hint="command capacity — the force you can field. raised by Golds and buildings; train a Gold when capped."
+        />
         <Bar value01={cmd01} color={cmdColor} />
         {command.capped && <Flag color={FC.error}>COMMAND CAPPED — field a Gold</Flag>}
       </div>
@@ -33,6 +39,7 @@ export function CastePanel({ view }: { view: CasteView }) {
           label="food"
           value={`${food.net >= 0 ? '+' : ''}${food.net}/min`}
           color={netColor}
+          hint="grain income minus army upkeep, per minute. a deficit starves your army — Reds are spared."
         />
         <span style={{ fontSize: 9, letterSpacing: 0.5, color: FC.textDim }}>
           grain {food.income}/min · upkeep {food.upkeep}/min
@@ -66,14 +73,16 @@ function Row({
   label,
   value,
   color,
+  hint,
 }: {
   icon: IconName
   label: string
   value: string
   color: string
+  hint?: string
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono }}>
+    <div title={hint} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, cursor: hint ? 'help' : 'default' }}>
       <Icon name={icon} size={12} color={FC.text3} />
       <span style={{ fontSize: 9, letterSpacing: 1, color: FC.textDim }}>{label}</span>
       <span style={{ marginLeft: 'auto', fontSize: 13, color }}>{value}</span>
