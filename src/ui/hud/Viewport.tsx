@@ -51,6 +51,8 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
   // Left-drag (select) and middle-drag (pan) gesture state.
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null)
   const pan = useRef<{ x: number; y: number } | null>(null)
+  // Double-click detection (select all of a type on screen).
+  const lastClick = useRef<{ t: number; id: EntityId }>({ t: 0, id: -1 })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -168,12 +170,33 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
       view.dragRect = null
       if (e.button !== 0 || !d) return
 
-      const hit = new HitTest(source.getSnapshot())
+      const snap = source.getSnapshot()
+      const hit = new HitTest(snap)
       if (d.moved) {
         view.selected = new Set(hit.selectInRect(cam, rectFromPoints(d.x, d.y, p.x, p.y), HUMAN))
       } else {
         const picked = hit.pickAt(cam, p.x, p.y)
-        view.selected = picked ? new Set([picked.id]) : new Set()
+        const now = performance.now()
+        const doubleClick =
+          !!picked && picked.etype === 'unit' && picked.id === lastClick.current.id && now - lastClick.current.t < 320
+        if (doubleClick) {
+          // Select every own unit of this kind within the visible viewport.
+          const v = cam.visibleTiles()
+          view.selected = new Set(
+            snap.entities
+              .filter(
+                (e2) =>
+                  e2.etype === 'unit' &&
+                  e2.owner === HUMAN &&
+                  e2.kind === picked.kind &&
+                  e2.x >= v.x0 && e2.x <= v.x1 && e2.y >= v.y0 && e2.y <= v.y1,
+              )
+              .map((e2) => e2.id),
+          )
+        } else {
+          view.selected = picked ? new Set([picked.id]) : new Set()
+        }
+        lastClick.current = { t: now, id: picked?.id ?? -1 }
       }
       onSelectRef.current?.([...view.selected])
     }
