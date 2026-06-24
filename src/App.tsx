@@ -11,16 +11,19 @@ import SkirmishSetupScreen from '@/ui/screens/SkirmishSetupScreen'
 import SkirmishScreen from '@/ui/screens/SkirmishScreen'
 import ResultScreen from '@/ui/screens/ResultScreen'
 import CodexScreen from '@/ui/screens/CodexScreen'
+import SettingsScreen from '@/ui/screens/SettingsScreen'
 
 export default function App() {
   const nav = useScreen('menu')
-  const menu = <MenuScreen onPlay={nav.toSetup} onCodex={nav.toCodex} />
+  const menu = <MenuScreen onPlay={nav.toSetup} onCodex={nav.toCodex} onSettings={nav.toSettings} />
 
   switch (nav.screen) {
     case 'skirmish-setup':
       return <SkirmishSetupScreen onDeploy={nav.toSkirmish} onBack={nav.toMenu} />
     case 'codex':
       return <CodexScreen onBack={nav.toMenu} />
+    case 'settings':
+      return <SettingsScreen onBack={nav.toMenu} />
     case 'skirmish':
       return nav.config ? (
         <SkirmishScreen

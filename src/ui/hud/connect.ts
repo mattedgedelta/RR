@@ -6,8 +6,8 @@
  * plus the static data tables (absolute HP/armor/LOS aren't carried per-frame).
  */
 import { RESOURCE_KINDS, RESOURCE_META } from '@/game/data/resources'
-import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
-import { UNITS, type UnitKind } from '@/game/data/units'
+import { BUILDINGS, BUILDING_ICON, type BuildingKind } from '@/game/data/buildings'
+import { UNITS, UNIT_ICON, type UnitKind } from '@/game/data/units'
 import { AGES, ageAtLeast, type AgeId } from '@/game/data/ages'
 import { HOUSES, type HouseId } from '@/game/data/houses'
 import type { Snapshot } from '@/game/sim/snapshot'
@@ -82,6 +82,7 @@ export function projectSelection(
         progress01: prog,
         queueLen: e.queueLen ?? 0,
         etaSec: Math.max(0, Math.round(ud.buildTime * (1 - prog))),
+        queue: e.queue ?? [],
       }
     }
     return { name: def.label, owner: e.owner, hp: Math.round(e.hp01 * def.hp), maxHp: def.hp, badge, stats, production }
@@ -139,7 +140,7 @@ export function commandSlots(
       slots[i] = {
         hotkey: SLOT_KEYS[i],
         label: `train_${u}`,
-        icon: 'users',
+        icon: UNIT_ICON[u],
         cost: ud.cost,
         variant: ageAtLeast(age, ud.requiredAge) && !lockedUnique ? 'default' : 'disabled',
       }
@@ -162,7 +163,7 @@ export function commandSlots(
       slots[i] = {
         hotkey: SLOT_KEYS[i],
         label: `build_${kind}`,
-        icon: 'hammer',
+        icon: BUILDING_ICON[kind],
         cost: BUILDINGS[kind].cost,
       }
       i++

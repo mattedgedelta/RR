@@ -40,7 +40,13 @@ export const FIXTURE_SELECTION: SelectionView = {
     { label: 'garrison', value: '3/15' },
     { label: 'los', value: '8' },
   ],
-  production: { unit: 'pioneer', progress01: 0.46, queueLen: 3, etaSec: 12 },
+  production: {
+    unit: 'pioneer',
+    progress01: 0.46,
+    queueLen: 3,
+    etaSec: 12,
+    queue: ['pioneer', 'pioneer', 'pioneer'],
+  },
 }
 
 export const FIXTURE_COMMANDS: (CommandSlot | null)[] = [
