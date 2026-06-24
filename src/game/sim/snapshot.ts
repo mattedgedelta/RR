@@ -73,8 +73,15 @@ export interface Snapshot {
   resources: ResourceBag
   /** Per-minute gather rates (filled by the economy system; 0 until then). */
   rates: ResourceBag
+  /** Command used / capacity (the caste "population"; Golds raise the cap). */
   pop: number
   popCap: number
+  /** Grain eaten per minute by the human's living units. */
+  upkeep: number
+  /** True while grain can't cover upkeep — the human's units are attriting. */
+  starving: boolean
+  /** Living-unit tally per Color for the human (caste dashboard). */
+  colorCounts: Record<UnitKind, number>
   idleCount: number
   /** Idle worker ids for player 0 (for IdleBadge cycle-select). */
   idleUnitIds: number[]
@@ -102,6 +109,9 @@ export function emptySnapshot(): Snapshot {
     rates: emptyBag(),
     pop: 0,
     popCap: 0,
+    upkeep: 0,
+    starving: false,
+    colorCounts: emptyColorCounts(),
     idleCount: 0,
     idleUnitIds: [],
     age: 'bondsman',
@@ -270,6 +280,9 @@ export function buildSnapshot(world: World): Snapshot {
     rates: { ...human.rateTracker.perMin },
     pop: human.pop,
     popCap: human.popCap,
+    upkeep: human.grainUpkeep,
+    starving: human.starving,
+    colorCounts: humanColorCounts(world),
     idleCount: human.idleUnitIds.length,
     idleUnitIds: [...human.idleUnitIds],
     age: human.age,
@@ -282,6 +295,22 @@ export function buildSnapshot(world: World): Snapshot {
     entities,
     outcome: world.outcome,
   }
+}
+
+/** Zeroed per-Color tally. */
+function emptyColorCounts(): Record<UnitKind, number> {
+  const out = {} as Record<UnitKind, number>
+  for (const k of Object.keys(UNITS) as UnitKind[]) out[k] = 0
+  return out
+}
+
+/** Living-unit count per Color for the human (player 0). */
+function humanColorCounts(world: World): Record<UnitKind, number> {
+  const out = emptyColorCounts()
+  for (const u of world.units.values()) {
+    if (u.owner === 0) out[u.kind]++
+  }
+  return out
 }
 
 /** The most recent `underAttack` event for player 0 this tick, as HUD alert. */

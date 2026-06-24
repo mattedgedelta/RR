@@ -18,6 +18,7 @@ import { runEconomy } from './systems/economy'
 import { runConstruction } from './systems/construction'
 import { runProduction } from './systems/production'
 import { runCombat } from './systems/combat'
+import { runCastes } from './systems/castes'
 import { runAges } from './systems/ages'
 import { runWin } from './systems/win'
 
@@ -34,6 +35,7 @@ export function tick(world: World): void {
   runConstruction(world)
   runProduction(world)
   runCombat(world)
+  runCastes(world)
   runAges(world)
   runWin(world)
   cleanup(world)
@@ -44,6 +46,7 @@ function cleanup(world: World): void {
   for (const u of world.units.values()) {
     if (u.hp > 0) continue
     world.players[u.owner].pop -= UNITS[u.kind].pop
+    world.players[u.owner].popCap -= UNITS[u.kind].commandProvided // lost Gold → less command
     world.units.delete(u.id)
   }
 
