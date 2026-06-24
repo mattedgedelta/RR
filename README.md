@@ -59,3 +59,32 @@ Phased build per `plan.md` (Phases 0–11, milestones M0–M6).
 - **Feedback pass 4** — a building's **build age** is now the later of its own age and the age that unlocks any unit it produces (`buildAge`), so a Legion Hall waits for Initiate (obsidian) and a Kennel for Peerless (howler) — enforced in the build command, the build menu, and shown in the Codex; **double-click a unit** selects every own unit of that kind in the viewport; Pioneers that finish **building a Farm auto-start harvesting it**; and the existing **control groups** (Ctrl/⌘+1–9 assign · 1–9 select) no longer yank the camera on select. Verified headlessly (buildAge values + the Legion-Hall gate, farm-builder auto-gather).
 
 _Each phase ends green on `npm run typecheck` + `npm run build`._
+
+## Colors — caste-labor economy (in progress)
+
+Bringing the Red Rising **Color caste system** into the game as a *labor economy*: your populace is a pyramid of Colors, each locked to its caste's role, run under **hard constraints** (command capacity + food upkeep). Every unit is a Color; the mix you cultivate *is* your strategy.
+
+**The six Colors** (+ the Mars-unique Howler):
+
+| Color | Role | Capability |
+|---|---|---|
+| **Red** | labor | gather + build; feeds the Society |
+| **Gray** | line infantry | fight |
+| **Obsidian** | heavy shock | fight |
+| **Gold** | command + elite | provides command capacity; strong fighter |
+| **Yellow** | medicus | heals nearby units + eases famine |
+| **Blue** | pilot / scout | fast, fragile, long LOS (peels back fog) |
+
+**The economy (design):** training a lowColor costs **command capacity** (a hard cap supplied by Golds + buildings) and adds **grain upkeep** (higher castes eat more); a food deficit starves the Society. Reds feed everyone — tying the new renewable **Farm** to the caste loop.
+
+**Phases:**
+
+| Phase | Scope | Status |
+|---|---|---|
+| **A — Roster & role-locks** | the six Colors + capability flags; `canGather/canBuild/canFight/canHeal` enforced; `pioneer → red`; building→Color map; on-map shapes; Codex | ✅ done |
+| B — Caste economy | command capacity (hard) + grain upkeep & starvation (hard); Yellow healing; per-Color tally on the snapshot | ⏳ next |
+| C — Caste dashboard (HUD) | Color tally + command bar + food balance panel; STARVING / COMMAND_CAPPED alerts | ⬜ todo |
+| D — AI & balance | AI runs a balanced pyramid (and advances ages); numbers tuning | ⬜ todo |
+| E — Flavor & polish | observability-styled labels, Codex copy, hints | ⬜ todo |
+
+- **Phase A** — `units.ts` is now a six-Color roster (+ Howler) with caste capability flags (`canGather/canBuild/canFight/canHeal`) and the economy fields (`upkeep/commandCost/commandProvided`) staged for Phase B; `pioneer` renamed to `red`. Role-locks are live: only Reds build (`canBuild` in the build command), only fighting castes engage (`canFight` gate in combat — Yellow/Blue are non-combatants), and stance defaults follow role. Buildings train their Colors (Spire → red/blue/gold, Legion Hall → gray/obsidian, Institute → yellow, Kennel → howler), and `buildAge` keeps each gated to its unit's age. Each Color draws a distinct on-map silhouette; Blue's long LOS already exploits the fog system; the Codex lists all six. Verified headlessly: starters are Reds, build/fight role-locks hold, build-ages derive correctly.

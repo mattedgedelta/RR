@@ -73,13 +73,13 @@ function think(world: World, p: Player, tier: DifficultyTier): void {
   // 3) Train workers toward a difficulty-scaled target.
   const targetWorkers = Math.round(TARGET_WORKERS * tier.economyMul)
   if (spire && workers.length < targetWorkers && spire.queue.length < 2) {
-    dispatch(world, { type: 'train', player: p.id, buildingId: spire.id, unit: 'pioneer' })
+    dispatch(world, { type: 'train', player: p.id, buildingId: spire.id, unit: 'red' })
   }
 
   // 3b) Train any unlocked military from production buildings (age-gated by command).
   for (const b of buildings) {
     if (b.state !== 'complete' || b.queue.length >= 2) continue
-    const unit = BUILDINGS[b.kind].produces.find((u) => u !== 'pioneer')
+    const unit = BUILDINGS[b.kind].produces.find((u) => u !== 'red')
     if (unit) dispatch(world, { type: 'train', player: p.id, buildingId: b.id, unit })
   }
 
