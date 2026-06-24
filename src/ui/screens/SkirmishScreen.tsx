@@ -31,10 +31,11 @@ import { AgeProgress } from '@/ui/hud/AgeProgress'
 import { SelectionPanel } from '@/ui/hud/SelectionPanel'
 import { CommandGrid } from '@/ui/hud/CommandGrid'
 import { MinimapPanel } from '@/ui/hud/MinimapPanel'
+import { CastePanel } from '@/ui/hud/CastePanel'
 import { ViewportOverlay } from '@/ui/hud/ViewportOverlay'
 import { AlertToast } from '@/ui/hud/AlertToast'
 import type { CommandSlot } from '@/ui/hud/types'
-import { resourceItems, ageView, projectSelection, commandSlots } from '@/ui/hud/connect'
+import { resourceItems, ageView, projectSelection, commandSlots, casteView } from '@/ui/hud/connect'
 
 const HUMAN = 0
 
@@ -295,6 +296,7 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
             }
           }}
         />
+        <CastePanel view={casteView(snap)} />
         <div style={{ flex: 1 }} />
         <CommandGrid slots={slots} onSlot={(_, slot) => runSlot(slot)} />
       </div>

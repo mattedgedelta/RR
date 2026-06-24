@@ -12,9 +12,29 @@ import { AGES, ageAtLeast, type AgeId } from '@/game/data/ages'
 import { HOUSES, type HouseId } from '@/game/data/houses'
 import { canAfford, type ResourceBag } from '@/game/data/resources'
 import type { Snapshot } from '@/game/sim/snapshot'
-import type { ResourceItem, AgeView, SelectionView, SelectionStat, CommandSlot } from './types'
+import type { ResourceItem, AgeView, SelectionView, SelectionStat, CommandSlot, CasteView } from './types'
 
 const HUMAN = 0
+
+const CASTE_ORDER: UnitKind[] = ['red', 'gray', 'obsidian', 'gold', 'yellow', 'blue', 'howler']
+
+/** The caste dashboard: command capacity, grain balance, and Color tally. */
+export function casteView(snap: Snapshot): CasteView {
+  const colors = CASTE_ORDER.map((k) => ({
+    kind: k,
+    label: UNITS[k].label,
+    icon: UNIT_ICON[k],
+    count: snap.colorCounts[k] ?? 0,
+  })).filter((c) => c.count > 0)
+  const income = Math.round(snap.rates.grain)
+  const upkeep = Math.round(snap.upkeep)
+  return {
+    command: { used: snap.pop, cap: snap.popCap, capped: snap.pop >= snap.popCap },
+    food: { upkeep, income, net: income - upkeep, starving: snap.starving },
+    colors,
+    total: colors.reduce((n, c) => n + c.count, 0),
+  }
+}
 
 export function resourceItems(snap: Snapshot): ResourceItem[] {
   return RESOURCE_KINDS.map((k) => ({
