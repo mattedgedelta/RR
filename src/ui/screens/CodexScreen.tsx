@@ -154,6 +154,14 @@ function HouseDetail({ house }: { house: HouseId }) {
 
 function UnitDetail({ kind }: { kind: UnitKind }) {
   const u = UNITS[kind]
+  const caps: string[] = []
+  if (u.canGather) caps.push('gathers')
+  if (u.canBuild) caps.push('builds')
+  if (u.canFight && u.attack > 0) caps.push('fights')
+  if (u.canHeal) caps.push('heals nearby units')
+  if (u.commandProvided) caps.push(`provides +${u.commandProvided} command`)
+  if (u.role === 'scout') caps.push('scout — wide line of sight')
+  if (!caps.length) caps.push('non-combatant')
   return (
     <Panel title="detail">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -169,12 +177,14 @@ function UnitDetail({ kind }: { kind: UnitKind }) {
         <StatTile label="speed" value={`${u.speed}/s`} />
         <StatTile label="cooldown" value={`${u.attackCooldown}s`} />
         <StatTile label="los" value={u.los} />
-        <StatTile label="pop" value={u.pop} />
+        <StatTile label="command" value={u.pop} />
+        <StatTile label="upkeep" value={`${u.upkeep} grain/min`} />
         <StatTile label="build_time" value={`${u.buildTime}s`} />
         <StatTile label="age" value={AGES[u.requiredAge].label} />
         <StatTile label="made_by" value={BUILDINGS[u.producedBy].label} />
-        <StatTile label="gathers" value={u.canGather ? 'yes' : 'no'} />
       </Grid>
+      <SectionLabel>caste role</SectionLabel>
+      <div style={{ fontSize: 12, color: FC.accent }}>{caps.join(' · ')}</div>
       <SectionLabel>cost</SectionLabel>
       <div style={{ fontSize: 12, color: FC.text2 }}>{costStr(u.cost)}</div>
     </Panel>

@@ -2,16 +2,17 @@
  * units.ts — the Color-caste unit roster.
  *
  * Each Color is a unit locked to its caste's role (Red Rising's Society):
- *   red      — labor: gathers + builds, the backbone (was "pioneer")
+ *   red      — labor: gathers + builds, the backbone
  *   gray     — line infantry
  *   obsidian — heavy shock troops
  *   gold     — command + elite fighter (provides command capacity)
- *   yellow   — medicus: heals nearby units (and eases famine) — Phase B
+ *   yellow   — medicus: heals nearby units (and eases famine)
  *   blue     — pilot/scout: fast, fragile, long line-of-sight (peels back fog)
  *   howler   — House Mars unique raider (from the Kennel)
  *
- * Capability flags (`canGather/canBuild/canFight/canHeal`) define the role lock;
- * `upkeep`/`commandCost`/`commandProvided` feed the caste economy (Phase B).
+ * Capability flags (`canGather/canBuild/canFight/canHeal`) define the role lock.
+ * Caste economy: `pop` is the **command capacity consumed**, `commandProvided`
+ * is what a Gold adds to it, and `upkeep` is grain eaten per minute.
  * Armor is melee/pierce; distances in tiles, speed in tiles/sec, times in sec.
  */
 import type { Cost } from './resources'
@@ -42,21 +43,19 @@ export interface UnitDef {
   cost: Cost
   /** Train time in seconds. */
   buildTime: number
-  /** Population slots consumed. */
+  /** Command capacity consumed (the caste "population" cost). */
   pop: number
   producedBy: BuildingKind
   requiredAge: AgeId
-  // ── caste capability flags (role lock) ──
+  // ── caste role lock ──
   canGather: boolean
   canBuild: boolean
   canFight: boolean
   canHeal: boolean
-  // ── caste economy (Phase B) ──
+  // ── caste economy ──
   /** Grain consumed per minute while alive. */
   upkeep: number
-  /** Command capacity this unit consumes. */
-  commandCost: number
-  /** Command capacity this unit provides (Gold). */
+  /** Command capacity this unit provides (Gold only). */
   commandProvided: number
   unique: boolean
 }
@@ -81,10 +80,9 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     requiredAge: 'bondsman',
     canGather: true,
     canBuild: true,
-    canFight: true, // weak — only really retaliates when attacked
+    canFight: true, // weak — really only retaliates when attacked
     canHeal: false,
     upkeep: 3,
-    commandCost: 1,
     commandProvided: 0,
     unique: false,
   },
@@ -110,7 +108,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: true,
     canHeal: false,
     upkeep: 9,
-    commandCost: 1,
     commandProvided: 0,
     unique: false,
   },
@@ -128,7 +125,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     los: 5,
     cost: { grain: 60, gold: 20 },
     buildTime: 18,
-    pop: 1,
+    pop: 2,
     producedBy: 'legionHall',
     requiredAge: 'initiate',
     canGather: false,
@@ -136,7 +133,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: true,
     canHeal: false,
     upkeep: 15,
-    commandCost: 2,
     commandProvided: 0,
     unique: false,
   },
@@ -154,7 +150,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     los: 7,
     cost: { grain: 100, gold: 150 },
     buildTime: 40,
-    pop: 1,
+    pop: 0, // a Gold consumes no command — it *is* command
     producedBy: 'spire',
     requiredAge: 'peerless',
     canGather: false,
@@ -162,7 +158,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: true,
     canHeal: false,
     upkeep: 24,
-    commandCost: 0,
     commandProvided: 10,
     unique: false,
   },
@@ -188,7 +183,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: false,
     canHeal: true,
     upkeep: 12,
-    commandCost: 1,
     commandProvided: 0,
     unique: false,
   },
@@ -214,7 +208,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: false,
     canHeal: false,
     upkeep: 6,
-    commandCost: 1,
     commandProvided: 0,
     unique: false,
   },
@@ -232,7 +225,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     los: 6,
     cost: { grain: 50, helium3: 30 },
     buildTime: 16,
-    pop: 1,
+    pop: 2,
     producedBy: 'kennel',
     requiredAge: 'peerless',
     canGather: false,
@@ -240,7 +233,6 @@ export const UNITS: Record<UnitKind, UnitDef> = {
     canFight: true,
     canHeal: false,
     upkeep: 15,
-    commandCost: 2,
     commandProvided: 0,
     unique: true,
   },

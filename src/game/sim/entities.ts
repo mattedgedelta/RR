@@ -189,6 +189,7 @@ export function spawnUnit(
   }
   world.units.set(unit.id, unit)
   world.players[owner].pop += def.pop
+  world.players[owner].popCap += def.commandProvided // Golds raise the command cap
   return unit
 }
 

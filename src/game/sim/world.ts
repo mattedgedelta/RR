@@ -72,6 +72,10 @@ export interface Player {
   age: AgeId
   ageProgress: AgeProgress | null
   defeated: boolean
+  /** True while grain can't cover this tick's upkeep — living units attrit. */
+  starving: boolean
+  /** Total grain eaten per minute by this player's living units (set by castes). */
+  grainUpkeep: number
   /** Worker ids detected idle this tick (refreshed by the economy system). */
   idleUnitIds: EntityId[]
   /** Trailing-window income tracker (per minute), refreshed by economy. */
@@ -184,6 +188,8 @@ export function createWorld(seed: number, config: MatchConfig): World {
     age: 'bondsman' as AgeId,
     ageProgress: null,
     defeated: false,
+    starving: false,
+    grainUpkeep: 0,
     idleUnitIds: [],
     rateTracker: new RateTracker(),
     ai: p.kind === 'cpu' ? { nextThinkTick: i * 3 } : null,
