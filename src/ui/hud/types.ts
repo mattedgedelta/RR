@@ -66,6 +66,22 @@ export interface SelectionView {
   gather?: { resource: string; progress01: number; phase: string }
 }
 
+export interface CasteCount {
+  kind: string
+  label: string
+  icon: IconName
+  count: number
+}
+
+/** The caste dashboard: command capacity, food balance, and Color tally. */
+export interface CasteView {
+  command: { used: number; cap: number; capped: boolean }
+  food: { upkeep: number; income: number; net: number; starving: boolean }
+  /** Colors the player currently fields (count > 0), in roster order. */
+  colors: CasteCount[]
+  total: number
+}
+
 export interface CommandSlot {
   hotkey: string
   label: string
