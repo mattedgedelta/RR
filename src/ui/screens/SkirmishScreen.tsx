@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createWorld, type Outcome, type World } from '@/game/sim/world'
 import { GameLoop } from '@/game/loop'
 import { dispatch, gameStore, useGameValue } from '@/game/store'
+import { settingsStore } from '@/game/settings'
 import { Camera } from '@/render/Camera'
 import { createViewState, type ViewState } from '@/render/types'
 import type { EntityId } from '@/game/sim/entities'
@@ -61,16 +62,23 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
 
   const [selectedIds, setSelectedIds] = useState<EntityId[]>([])
   const [toast, setToast] = useState<string | null>(null)
+  const [speed, setSpeedState] = useState(() => settingsStore.get().gameSpeed)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>()
   const lastPing = useRef(0)
 
   useEffect(() => {
+    loop.setSpeed(settingsStore.get().gameSpeed) // seed from the saved default
     loop.start()
     return () => {
       loop.stop()
       gameStore.reset()
     }
   }, [loop])
+
+  const changeSpeed = (v: number): void => {
+    loop.setSpeed(v)
+    setSpeedState(v)
+  }
 
   // Live state.
   const snap = useGameValue((s) => s)
@@ -210,6 +218,19 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <IdleBadge count={snap.idleCount} onClick={cycleIdle} />
           <Clock />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 9, letterSpacing: 1, color: FC.textDim }}>speed</span>
+            <input
+              type="range"
+              min={0.5}
+              max={4}
+              step={0.25}
+              value={speed}
+              onChange={(e) => changeSpeed(parseFloat(e.target.value))}
+              style={{ accentColor: FC.accent, width: 96 }}
+            />
+            <span style={{ fontSize: 11, color: FC.text2, width: 32 }}>{speed}×</span>
+          </div>
           <AgeProgress age={ageView(snap)} onAdvance={() => dispatch({ type: 'advanceAge', player: HUMAN })} />
           <button
             onClick={onExit}
@@ -257,7 +278,14 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
           view={minimapView}
           onSeek={(tx, ty) => camera.centerOn(tx, ty)}
         />
-        <SelectionPanel selection={selection} />
+        <SelectionPanel
+          selection={selection}
+          onCancelQueue={(i) => {
+            if (selectedBuildingId != null) {
+              dispatch({ type: 'cancelTrain', player: HUMAN, buildingId: selectedBuildingId, index: i })
+            }
+          }}
+        />
         <div style={{ flex: 1 }} />
         <CommandGrid slots={slots} onSlot={(_, slot) => runSlot(slot)} />
       </div>

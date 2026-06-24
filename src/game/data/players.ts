@@ -80,6 +80,8 @@ export interface MatchConfig {
   /** 2–8 player slots; slot 0 is the human. */
   players: PlayerSetup[]
   mapSize: MapSizeId
+  /** Scattered-resource density multiplier (1 = default); base clusters always seeded. */
+  resourceDensity?: number
 }
 
 /** True when every player is on a distinct team (free-for-all). */

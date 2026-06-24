@@ -4,7 +4,9 @@
  * production readout when the entity is training. Empty state when nothing is
  * selected.
  */
+import { Icon } from '@/theme/icons'
 import { FC, FONT } from '@/theme/palette'
+import { UNIT_ICON, type UnitKind } from '@/game/data/units'
 import { Panel } from '@/ui/common/Panel'
 import { Badge } from '@/ui/common/Badge'
 import { Bar } from '@/ui/common/Bar'
@@ -15,7 +17,13 @@ import type { SelectionView } from './types'
 const hpColor = (f: number): string =>
   f > 0.5 ? FC.accent : f > 0.25 ? FC.warn : FC.error
 
-export function SelectionPanel({ selection }: { selection: SelectionView | null }) {
+interface SelectionPanelProps {
+  selection: SelectionView | null
+  /** Cancel the queue item at `index` (refunds its cost). */
+  onCancelQueue?: (index: number) => void
+}
+
+export function SelectionPanel({ selection, onCancelQueue }: SelectionPanelProps) {
   if (!selection) {
     return (
       <Panel title="selection" style={{ minWidth: 240 }}>
@@ -57,6 +65,36 @@ export function SelectionPanel({ selection }: { selection: SelectionView | null 
       )}
 
       {selection.production && <ProductionBar production={selection.production} />}
+
+      {selection.production && selection.production.queue.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: FC.textDim }}>
+            queue · click to cancel
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {selection.production.queue.map((u, i) => (
+              <button
+                key={i}
+                onClick={() => onCancelQueue?.(i)}
+                title={`cancel ${u} (refund)`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 24,
+                  height: 24,
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  background: i === 0 ? FC.borderFaint : FC.card,
+                  border: `1px solid ${i === 0 ? FC.borderActive : FC.border}`,
+                }}
+              >
+                <Icon name={UNIT_ICON[u as UnitKind]} size={12} color={FC.text3} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }

@@ -12,7 +12,7 @@ import { useCallback, useState } from 'react'
 import type { MatchConfig } from '@/game/data/players'
 import type { Outcome } from '@/game/sim/world'
 
-export type Screen = 'menu' | 'skirmish-setup' | 'skirmish' | 'result' | 'codex'
+export type Screen = 'menu' | 'skirmish-setup' | 'skirmish' | 'result' | 'codex' | 'settings'
 
 interface ScreenState {
   screen: Screen
@@ -28,6 +28,7 @@ export interface ScreenNav extends ScreenState {
   toSkirmish: (config: MatchConfig) => void
   toResult: (outcome: Outcome) => void
   toCodex: () => void
+  toSettings: () => void
 }
 
 export function useScreen(initial: Screen = 'menu'): ScreenNav {
@@ -54,6 +55,7 @@ export function useScreen(initial: Screen = 'menu'): ScreenNav {
     [],
   )
   const toCodex = useCallback(() => setState((s) => ({ ...s, screen: 'codex' })), [])
+  const toSettings = useCallback(() => setState((s) => ({ ...s, screen: 'settings' })), [])
 
-  return { ...state, toMenu, toSetup, toSkirmish, toResult, toCodex }
+  return { ...state, toMenu, toSetup, toSkirmish, toResult, toCodex, toSettings }
 }

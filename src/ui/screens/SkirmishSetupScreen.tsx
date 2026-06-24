@@ -18,6 +18,7 @@ import {
 } from '@/game/data/players'
 import { HOUSE_ORDER, HOUSES, DEFAULT_HOUSE, type HouseId } from '@/game/data/houses'
 import { TECH_NODES } from '@/game/data/tech'
+import { settingsStore } from '@/game/settings'
 import { Panel } from '@/ui/common/Panel'
 import { Badge } from '@/ui/common/Badge'
 import { Button } from '@/ui/common/Button'
@@ -67,7 +68,12 @@ export default function SkirmishSetupScreen({ onDeploy, onBack }: SetupProps) {
         return { id, kind: 'cpu', house: o.house, team: teamOf(i + 1), difficulty: o.difficulty, color: playerColor(id) }
       }),
     ]
-    return { seed: Math.floor(Math.random() * 0xffffffff), players, mapSize }
+    return {
+      seed: Math.floor(Math.random() * 0xffffffff),
+      players,
+      mapSize,
+      resourceDensity: settingsStore.get().resourceDensity,
+    }
   }
 
   useHotkeys({ enter: () => onDeploy(build()), escape: onBack })

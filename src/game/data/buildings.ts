@@ -13,6 +13,7 @@
 import type { Cost, ResourceKind } from './resources'
 import type { AgeId } from './ages'
 import type { UnitKind } from './units'
+import type { IconName } from '@/theme/icons'
 
 export type BuildingKind =
   | 'spire'
@@ -219,6 +220,19 @@ export const BUILDINGS: Record<BuildingKind, BuildingDef> = {
 }
 
 export const buildingDef = (kind: BuildingKind): BuildingDef => BUILDINGS[kind]
+
+/** Distinct command/tech icon per building. */
+export const BUILDING_ICON: Record<BuildingKind, IconName> = {
+  spire: 'home',
+  legionHall: 'swords',
+  granary: 'leaf',
+  exchange: 'coins',
+  forge: 'hammer',
+  kennel: 'crosshair',
+  citadel: 'shield',
+  institute: 'zap',
+  olympus: 'gem',
+}
 
 /** Buildings that act as a drop-off point for `res`. */
 export function acceptsDropOff(def: BuildingDef, res: ResourceKind): boolean {

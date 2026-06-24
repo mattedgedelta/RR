@@ -36,8 +36,12 @@ export interface RenderEntity {
   producing?: UnitKind | null
   produceProgress01?: number
   queueLen?: number
+  /** Building only: queued unit kinds (head first), for the queue strip. */
+  queue?: UnitKind[]
   /** Unit only. */
   order?: UnitOrder
+  /** Unit only: the owner's current age index (0..3), for age-tier visuals. */
+  ageIndex?: number
   /** Resource node only: remaining fraction + raw amounts. */
   amount01?: number
   amount?: number
@@ -201,6 +205,7 @@ export function buildSnapshot(world: World): Snapshot {
       producing: head ? head.unit : null,
       produceProgress01: head ? 1 - head.remaining / head.total : 0,
       queueLen: b.queue.length,
+      queue: b.queue.map((q) => q.unit),
     })
   }
 
@@ -219,6 +224,7 @@ export function buildSnapshot(world: World): Snapshot {
       h: 1,
       hp01: u.maxHp > 0 ? u.hp / u.maxHp : 0,
       order: u.order,
+      ageIndex: AGES[world.players[u.owner].age].index,
     })
   }
 

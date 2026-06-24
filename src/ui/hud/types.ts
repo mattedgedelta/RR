@@ -44,6 +44,8 @@ export interface ProductionView {
   progress01: number
   queueLen: number
   etaSec: number
+  /** Full queue (head first) as unit kinds, for the cancellable queue strip. */
+  queue: string[]
 }
 
 export interface SelectionView {

@@ -248,7 +248,47 @@ export function createWorld(seed: number, config: MatchConfig): World {
     }
   }
 
+  scatterResources(world, config.resourceDensity ?? 1)
   return world
+}
+
+/** Resource kinds for scattered (non-base) nodes, with amount range + weight. */
+const SCATTER_KINDS: { resource: ResourceKind; min: number; max: number; weight: number }[] = [
+  { resource: 'grain', min: 180, max: 340, weight: 4 },
+  { resource: 'ore', min: 160, max: 260, weight: 3 },
+  { resource: 'helium3', min: 140, max: 240, weight: 2 },
+  { resource: 'gold', min: 100, max: 180, weight: 2 },
+]
+
+/**
+ * Sprinkle resource nodes across the whole map (in addition to the base
+ * clusters), away from start positions. Count scales with map area and the
+ * config's density. Deterministic via the world RNG.
+ */
+function scatterResources(world: World, density: number): void {
+  if (density <= 0) return
+  const { map, rng } = world
+  const totalWeight = SCATTER_KINDS.reduce((s, k) => s + k.weight, 0)
+  const count = Math.round(map.width * map.height * 0.025 * density)
+  const MIN_START_DIST = 5
+
+  for (let i = 0; i < count; i++) {
+    const x = rng.int(map.width)
+    const y = rng.int(map.height)
+    if (!isBuildable(map, x, y)) continue
+    if (map.startPositions.some((s) => Math.hypot(x - s.x, y - s.y) < MIN_START_DIST)) continue
+
+    let r = rng.int(totalWeight)
+    let pick = SCATTER_KINDS[0]
+    for (const k of SCATTER_KINDS) {
+      if (r < k.weight) {
+        pick = k
+        break
+      }
+      r -= k.weight
+    }
+    createResourceNode(world, pick.resource, x, y, rng.irange(pick.min, pick.max))
+  }
 }
 
 /** Difficulty tuning for a CPU player (think cadence, aggression, economy). */

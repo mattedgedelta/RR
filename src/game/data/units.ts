@@ -11,6 +11,7 @@
 import type { Cost } from './resources'
 import type { AgeId } from './ages'
 import type { BuildingKind } from './buildings'
+import type { IconName } from '@/theme/icons'
 
 export type UnitKind = 'pioneer' | 'obsidian' | 'howler'
 
@@ -107,3 +108,10 @@ export const UNITS: Record<UnitKind, UnitDef> = {
 }
 
 export const unitDef = (kind: UnitKind): UnitDef => UNITS[kind]
+
+/** Distinct command/tech icon per unit. */
+export const UNIT_ICON: Record<UnitKind, IconName> = {
+  pioneer: 'users',
+  obsidian: 'swords',
+  howler: 'crosshair',
+}
