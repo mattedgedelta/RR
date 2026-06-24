@@ -11,8 +11,8 @@
  * ≈ 50px → ~2×2). Costs are partial resource bags.
  */
 import type { Cost, ResourceKind } from './resources'
-import type { AgeId } from './ages'
-import type { UnitKind } from './units'
+import { AGES, type AgeId } from './ages'
+import { UNITS, type UnitKind } from './units'
 import type { IconName } from '@/theme/icons'
 
 export type BuildingKind =
@@ -241,6 +241,21 @@ export const BUILDINGS: Record<BuildingKind, BuildingDef> = {
 }
 
 export const buildingDef = (kind: BuildingKind): BuildingDef => BUILDINGS[kind]
+
+/**
+ * Age at which a building may be built: the later of its own `requiredAge` and
+ * the age that unlocks any unit it produces — so you can't raise a barracks
+ * before its troops exist (e.g. Legion Hall waits for Initiate/obsidian, Kennel
+ * for Peerless/howler).
+ */
+export function buildAge(kind: BuildingKind): AgeId {
+  const def = BUILDINGS[kind]
+  let age = def.requiredAge
+  for (const u of def.produces) {
+    if (AGES[UNITS[u].requiredAge].index > AGES[age].index) age = UNITS[u].requiredAge
+  }
+  return age
+}
 
 /** Distinct command/tech icon per building. */
 export const BUILDING_ICON: Record<BuildingKind, IconName> = {

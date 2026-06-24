@@ -6,7 +6,7 @@
  * plus the static data tables (absolute HP/armor/LOS aren't carried per-frame).
  */
 import { RESOURCE_KINDS, RESOURCE_META } from '@/game/data/resources'
-import { BUILDINGS, BUILDING_ICON, type BuildingKind } from '@/game/data/buildings'
+import { BUILDINGS, BUILDING_ICON, buildAge, type BuildingKind } from '@/game/data/buildings'
 import { UNITS, UNIT_ICON, type UnitKind } from '@/game/data/units'
 import { AGES, ageAtLeast, type AgeId } from '@/game/data/ages'
 import { HOUSES, type HouseId } from '@/game/data/houses'
@@ -184,7 +184,7 @@ export function commandSlots(
     let i = 0
     for (const kind of BUILD_MENU) {
       if (i >= 7) break
-      if (!ageAtLeast(age, BUILDINGS[kind].requiredAge)) continue
+      if (!ageAtLeast(age, buildAge(kind))) continue
       slots[i] = {
         hotkey: SLOT_KEYS[i],
         label: `build_${kind}`,

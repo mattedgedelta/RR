@@ -176,10 +176,6 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     if (live.length === 0) return
     view.selected = new Set(live)
     setSelectedIds(live)
-    const ents = snap.entities.filter((e) => live.includes(e.id))
-    const cx = ents.reduce((s, e) => s + e.x, 0) / ents.length
-    const cy = ents.reduce((s, e) => s + e.y, 0) / ents.length
-    camera.centerOn(cx, cy)
   }
 
   const keymap: HotkeyMap = {

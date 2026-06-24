@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { FC, FONT } from '@/theme/palette'
 import { HOUSE_ORDER, HOUSES, type HouseId } from '@/game/data/houses'
 import { UNITS, type UnitKind } from '@/game/data/units'
-import { BUILDINGS, type BuildingKind } from '@/game/data/buildings'
+import { BUILDINGS, buildAge, type BuildingKind } from '@/game/data/buildings'
 import { AGES } from '@/game/data/ages'
 import { TECH_NODES } from '@/game/data/tech'
 import { RESOURCE_KINDS, RESOURCE_META, type Cost } from '@/game/data/resources'
@@ -197,7 +197,7 @@ function BuildingDetail({ kind }: { kind: BuildingKind }) {
         <StatTile label="armor m/p" value={`${b.meleeArmor}/${b.pierceArmor}`} />
         <StatTile label="los" value={b.los} />
         <StatTile label="build_time" value={`${b.buildTime}s`} />
-        <StatTile label="age" value={AGES[b.requiredAge].label} />
+        <StatTile label="age" value={AGES[buildAge(kind)].label} />
         <StatTile label="pop_cap" value={b.popProvided ? `+${b.popProvided}` : '0'} />
         <StatTile label="garrison" value={b.garrisonCap || '—'} />
         <StatTile label="drop_off" value={drop} />

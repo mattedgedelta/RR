@@ -8,8 +8,9 @@
  * Builders whose target has vanished are released.
  */
 import { BUILDINGS } from '../../data/buildings'
+import { UNITS } from '../../data/units'
 import { TICK_HZ, type World } from '../world'
-import type { Building, Unit } from '../entities'
+import { DEFAULT_CARRY_CAPACITY, type Building, type Unit } from '../entities'
 
 /** Padding beyond a building's half-footprint within which a builder works. */
 const BUILD_PAD = 1.4
@@ -46,9 +47,28 @@ function complete(world: World, b: Building): void {
   b.hp = b.maxHp
   b.construction = null
   world.players[b.owner].popCap += BUILDINGS[b.kind].popProvided
+  // Free the builders — but a Farm's builders stay on as harvesters.
   for (const u of world.units.values()) {
-    if (u.buildTargetId === b.id) idle(u)
+    if (u.buildTargetId !== b.id) continue
+    if (b.kind === 'farm' && UNITS[u.kind].canGather) assignToFarm(u, b)
+    else idle(u)
   }
+}
+
+/** Put a worker straight onto harvesting the Farm it just finished building. */
+function assignToFarm(u: Unit, b: Building): void {
+  u.order = 'gather'
+  u.buildTargetId = null
+  u.gather = {
+    resource: 'grain',
+    nodeId: b.id,
+    carrying: 0,
+    capacity: DEFAULT_CARRY_CAPACITY,
+    phase: 'toNode',
+    dropOffId: null,
+  }
+  u.moveGoal = { x: b.x + b.w / 2, y: b.y + b.h / 2 }
+  u.path = null
 }
 
 function inRange(u: Unit, b: Building): boolean {

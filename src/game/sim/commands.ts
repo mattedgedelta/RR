@@ -12,7 +12,7 @@ import type { BuildingKind } from '../data/buildings'
 import type { PlayerId } from '../data/players'
 import type { Cost, ResourceKind } from '../data/resources'
 import { UNITS } from '../data/units'
-import { BUILDINGS } from '../data/buildings'
+import { BUILDINGS, buildAge } from '../data/buildings'
 import { canAfford, addCost } from '../data/resources'
 import { AGES, ageAtLeast } from '../data/ages'
 import { HOUSES } from '../data/houses'
@@ -178,7 +178,7 @@ function apply(world: World, cmd: Command): void {
     case 'build': {
       const def = BUILDINGS[cmd.building]
       const p = world.players[cmd.player]
-      if (!ageAtLeast(p.age, def.requiredAge)) break
+      if (!ageAtLeast(p.age, buildAge(cmd.building))) break
       if (!footprintBuildable(world.map, cmd.x, cmd.y, def.footprint.w, def.footprint.h)) break
       const cost = buildingCost(p, cmd.building)
       if (!canAfford(p.resources, cost)) break
