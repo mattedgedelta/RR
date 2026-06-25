@@ -168,8 +168,8 @@ const PIONEER_OFFSETS: { dx: number; dy: number }[] = [
 
 /**
  * Create a fully-seeded world from a match config: a deterministic map plus, for
- * each player, a completed Spire, three Pioneers, and a nearby resource cluster
- * at a balanced radial start.
+ * each player, a completed Spire, three Pioneers, one Blue scout, and a nearby
+ * resource cluster at a balanced radial start.
  */
 export function createWorld(seed: number, config: MatchConfig): World {
   const rng = mulberry32(seed)
@@ -240,6 +240,15 @@ export function createWorld(seed: number, config: MatchConfig): World {
       const py = Math.max(0.5, Math.min(map.height - 0.5, sy + off.dy))
       spawnUnit(world, 'red', player.id, px, py)
     }
+
+    // A single Blue scout to peel back the fog from the first tick.
+    spawnUnit(
+      world,
+      'blue',
+      player.id,
+      Math.max(0.5, Math.min(map.width - 0.5, sx + 1.0)),
+      Math.max(0.5, Math.min(map.height - 0.5, sy - 0.5)),
+    )
 
     // Resource cluster.
     for (const n of STARTING_NODES) {
