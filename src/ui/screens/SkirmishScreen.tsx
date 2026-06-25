@@ -129,18 +129,20 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     setSelectedIds([])
   }
 
-  // Cycle-select the next idle worker and centre the camera on it.
+  // Cycle-select the next idle unit (workers or military) and centre on it.
   const idleCycle = useRef(0)
-  const cycleIdle = (): void => {
-    const ids = snap.idleUnitIds
+  const idleMilCycle = useRef(0)
+  const cycleThrough = (ids: number[], cursor: { current: number }): void => {
     if (ids.length === 0) return
-    const id = ids[idleCycle.current % ids.length]
-    idleCycle.current += 1
+    const id = ids[cursor.current % ids.length]
+    cursor.current += 1
     view.selected = new Set([id])
     setSelectedIds([id])
     const e = snap.entities.find((en) => en.id === id)
     if (e) camera.centerOn(e.x, e.y)
   }
+  const cycleIdle = (): void => cycleThrough(snap.idleUnitIds, idleCycle)
+  const cycleIdleMilitary = (): void => cycleThrough(snap.idleMilitaryIds, idleMilCycle)
 
   const runSlot = (slot: CommandSlot | null): void => {
     if (!slot || slot.variant === 'disabled') return
@@ -167,16 +169,21 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     clearSelection()
   }
 
-  // Control groups: Ctrl+1..9 assigns the selection, 1..9 reselects it.
+  // Control groups: Ctrl+1..9 assigns the selection, 1..9 reselects it,
+  // Shift+1..9 adds the group to the current selection.
   const groups = useRef(new Map<string, EntityId[]>())
+  const [, bumpGroups] = useState(0)
   const assignGroup = (n: string): void => {
-    groups.current.set(n, [...selectedIds])
+    if (selectedIds.length === 0) groups.current.delete(n)
+    else groups.current.set(n, [...selectedIds])
+    bumpGroups((v) => v + 1) // refresh the group banners
   }
-  const selectGroup = (n: string): void => {
+  const selectGroup = (n: string, additive = false): void => {
     const live = (groups.current.get(n) ?? []).filter((id) => snap.entities.some((e) => e.id === id))
     if (live.length === 0) return
-    view.selected = new Set(live)
-    setSelectedIds(live)
+    const next = additive ? Array.from(new Set([...selectedIds, ...live])) : live
+    view.selected = new Set(next)
+    setSelectedIds(next)
   }
 
   const keymap: HotkeyMap = {
@@ -191,12 +198,25 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
     },
     delete: deleteSelection,
     backspace: deleteSelection,
+    '.': cycleIdle, // next idle Red
+    ',': cycleIdleMilitary, // next idle military
   }
   for (let n = 1; n <= 9; n++) {
     keymap[String(n)] = () => selectGroup(String(n))
     keymap[`ctrl+${n}`] = () => assignGroup(String(n))
+    keymap[`shift+${n}`] = () => selectGroup(String(n), true)
   }
   useHotkeys(keymap)
+
+  // Banners for any control group that still has live members.
+  const liveIds = useMemo(() => new Set(snap.entities.map((e) => e.id)), [snap])
+  const groupBanners: { n: string; count: number }[] = []
+  for (let n = 1; n <= 9; n++) {
+    const ids = groups.current.get(String(n))
+    if (!ids) continue
+    const count = ids.reduce((c, id) => c + (liveIds.has(id) ? 1 : 0), 0)
+    if (count > 0) groupBanners.push({ n: String(n), count })
+  }
 
   return (
     <div
@@ -261,6 +281,32 @@ export default function SkirmishScreen({ config, onExit, onResult }: SkirmishScr
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         <Viewport source={loop} map={world.map} camera={camera} view={view} onSelect={setSelectedIds} />
         <ViewportOverlay gridW={world.map.width} gridH={world.map.height} />
+        {groupBanners.length > 0 && (
+          <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6 }}>
+            {groupBanners.map((g) => (
+              <button
+                key={g.n}
+                onClick={() => selectGroup(g.n)}
+                title={`control group ${g.n} (${g.count})`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontFamily: FONT.mono,
+                  fontSize: 11,
+                  padding: '3px 8px',
+                  borderRadius: 5,
+                  cursor: 'pointer',
+                  background: FC.card,
+                  border: `1px solid ${FC.border}`,
+                }}
+              >
+                <span style={{ color: FC.accent, fontWeight: 600 }}>{g.n}</span>
+                <span style={{ color: FC.textDim }}>{g.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
         {toast && (
           <div style={{ position: 'absolute', top: 44, right: 12 }}>
             <AlertToast message={toast} />
