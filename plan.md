@@ -233,3 +233,51 @@ Build strictly top-to-bottom. Each **Phase** ends with a runnable/typechecked ch
 - The human stays in the loop between waves (read each wave's result, approve the next) rather than running all 5 waves unattended.
 
 ```
+
+---
+
+# Gameplay feedback — batch 5 (2026-06-24)
+
+Twelve items from playtesting, grouped into five ordered phases. Gate each on
+`tsc -b` + `vite build`, verify headless/in-browser, update README, then the
+human commits/merges before the next. Some items already partly exist (noted).
+
+### F1 — Economy & workers (low risk, isolated)
+- **multi-Red build** — let several Reds build/assist one foundation to speed it
+  up. _The construction system already speeds up with more builders_; gap is the
+  UX: multi-select build + right-click an in-progress foundation to add Reds.
+- **carry preserved on retarget** — reassigning a gathering Red to another node
+  of the **same resource type** must not dump what it's already carrying.
+- **walkable Farms** — Farm footprint should not block movement or drop-off
+  pathing (units may path over/through it).
+- **CPU builds Farms** — add Farm to the AI build order (renewable grain).
+
+### F2 — Selection & input
+- **idle hotkeys** — `.` cycles to an idle Red, `,` cycles to idle military
+  (needs idle-military ids on the snapshot; idle-worker ids already exist).
+- **additive groups** — `Shift`+group(1–9) adds that control group to the
+  current selection instead of replacing it.
+- **group banners** — small banners across the top-left (below the resource bar)
+  showing each *set* control group; shown only when a group exists.
+
+### F3 — Production & queue UI
+- **shift-queue 5** — `Shift`+train (click or hotkey) queues 5 instead of 1.
+  _The train command already takes `count`_; wire the HUD to pass 5 on shift.
+- **queue overflow** — a queue >10 currently stretches the `// selection` tile
+  across the screen; cap/wrap the queue strip.
+- **pop-cap indicator** — when queued command would exceed the cap, show a clear
+  "command capped" indicator (disable the train button + reason).
+
+### F4 — Movement & formation
+- **tight formation** — marching military should hold a tight formation and not
+  collapse/overlap into a single stacked unit.
+
+### F5 — Combat redesign (attack mechanisms) — biggest, needs design sign-off
+- **melee vs ranged** — Obsidian melee, Gray ranged, Gold melee **or** ranged via
+  an attack-stance toggle (default melee). Needs Gray/Gold range + stat tuning.
+- **Gold general stance** — Gold holds behind the formation as a commander.
+- **ranged arc** — ranged units position in an arc around the target at their
+  range; melee units close to contact.
+
+_Open design Qs for F5: Gray's range value & whether its damage/cooldown change;
+the Gold toggle's UI (new stance button); arc spacing/!overlap rules._

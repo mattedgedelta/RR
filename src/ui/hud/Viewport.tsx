@@ -11,6 +11,7 @@
 import { useEffect, useRef } from 'react'
 import { footprintBuildable, type GameMap } from '@/game/sim/map'
 import type { EntityId } from '@/game/sim/entities'
+import { UNITS, type UnitKind } from '@/game/data/units'
 import { dispatch } from '@/game/store'
 import { MapRenderer, type FrameSource } from '@/render/MapRenderer'
 import type { Camera } from '@/render/Camera'
@@ -96,8 +97,14 @@ export default function Viewport({ source, map, camera, view: propView, onSelect
 
       const hit = new HitTest(snap).pickAt(cam, sx, sy)
       const ids = [...view.selected]
+      const hasBuilder = sel.some(
+        (en) => en.etype === 'unit' && en.owner === HUMAN && UNITS[en.kind as UnitKind]?.canBuild,
+      )
       if (hit?.etype === 'resource') {
         dispatch({ type: 'gather', player: HUMAN, unitIds: ids, nodeId: hit.id })
+      } else if (hit?.etype === 'building' && hit.owner === HUMAN && hit.state && hit.state !== 'complete' && hasBuilder) {
+        // Send selected Reds to help finish an in-progress foundation.
+        dispatch({ type: 'assistBuild', player: HUMAN, unitIds: ids, buildingId: hit.id })
       } else if (hit?.etype === 'building' && hit.owner === HUMAN && hit.kind === 'farm') {
         // Assign workers to harvest an own Farm.
         dispatch({ type: 'gather', player: HUMAN, unitIds: ids, nodeId: hit.id })

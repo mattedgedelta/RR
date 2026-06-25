@@ -34,6 +34,7 @@ export type Command =
   | { type: 'gather'; player: PlayerId; unitIds: EntityId[]; nodeId: EntityId }
   | { type: 'attack'; player: PlayerId; unitIds: EntityId[]; targetId: EntityId }
   | { type: 'build'; player: PlayerId; builderIds: EntityId[]; building: BuildingKind; x: number; y: number }
+  | { type: 'assistBuild'; player: PlayerId; unitIds: EntityId[]; buildingId: EntityId }
   | { type: 'train'; player: PlayerId; buildingId: EntityId; unit: UnitKind; count?: number }
   | { type: 'cancelTrain'; player: PlayerId; buildingId: EntityId; index: number }
   | { type: 'setRally'; player: PlayerId; buildingId: EntityId; x: number; y: number }
@@ -147,12 +148,15 @@ function apply(world: World, cmd: Command): void {
       if (resource == null) break
       for (const u of ownedUnits(world, cmd.player, cmd.unitIds)) {
         if (!UNITS[u.kind].canGather) continue
+        // Keep what we're already carrying if it's the same resource — switching
+        // to another node of the same type shouldn't dump a partial load.
+        const keep = u.gather && u.gather.resource === resource ? u.gather.carrying : 0
         clearJob(u)
         u.order = 'gather'
         u.gather = {
           resource,
           nodeId: cmd.nodeId,
-          carrying: 0,
+          carrying: keep,
           capacity: 10,
           phase: 'toNode',
           dropOffId: null,
@@ -193,6 +197,22 @@ function apply(world: World, cmd: Command): void {
         u.moveGoal = goal
         u.path = null
         b.construction?.builders.push(u.id)
+      }
+      break
+    }
+    case 'assistBuild': {
+      // Send more builders onto an in-progress foundation to speed it up.
+      const b = getBuilding(world, cmd.buildingId)
+      if (!b || b.owner !== cmd.player || b.state === 'complete' || !b.construction) break
+      const goal = center(b)
+      for (const u of ownedUnits(world, cmd.player, cmd.unitIds)) {
+        if (!UNITS[u.kind].canBuild) continue
+        clearJob(u)
+        u.order = 'build'
+        u.buildTargetId = b.id
+        u.moveGoal = goal
+        u.path = null
+        if (!b.construction.builders.includes(u.id)) b.construction.builders.push(u.id)
       }
       break
     }
