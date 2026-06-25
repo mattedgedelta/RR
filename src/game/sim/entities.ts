@@ -226,8 +226,10 @@ export function placeBuilding(
     garrison: [],
   }
   world.buildings.set(building.id, building)
+  // Farms are walkable — units path over them and drop grain off through them.
+  const walkable = kind === 'farm'
   for (const t of footprintTiles(x, y, def.footprint.w, def.footprint.h)) {
-    setOccupant(world.map, t.x, t.y, building.id)
+    setOccupant(world.map, t.x, t.y, building.id, walkable)
   }
   if (complete) world.players[owner].popCap += def.popProvided
   return building

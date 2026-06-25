@@ -20,6 +20,8 @@ export interface Tile {
   terrain: TerrainKind
   /** Entity occupying this tile (building/resource), or null. */
   occupantId: EntityId | null
+  /** True when the occupant can be walked over (e.g. a Farm). */
+  occupantWalkable: boolean
 }
 
 export interface GameMap {
@@ -50,23 +52,34 @@ export function terrainPassable(map: GameMap, x: number, y: number): boolean {
   return t != null && !IMPASSABLE.has(t.terrain)
 }
 
-/** Passable for movement: in bounds, passable terrain, no occupant. */
+/** Passable for movement: in bounds, passable terrain, and either unoccupied or
+ *  occupied by something walkable (a Farm). */
 export function isPassable(map: GameMap, x: number, y: number): boolean {
+  const t = tileAt(map, x, y)
+  return t != null && !IMPASSABLE.has(t.terrain) && (t.occupantId === null || t.occupantWalkable)
+}
+
+/** Buildable: in bounds, passable terrain, and entirely unoccupied (a walkable
+ *  occupant like a Farm still blocks building on top of it). */
+export function isBuildable(map: GameMap, x: number, y: number): boolean {
   const t = tileAt(map, x, y)
   return t != null && !IMPASSABLE.has(t.terrain) && t.occupantId === null
 }
 
-/** Buildable: same rule as passable (footprint must be all-clear). */
-export const isBuildable = isPassable
-
-export function setOccupant(map: GameMap, x: number, y: number, id: EntityId): void {
+export function setOccupant(map: GameMap, x: number, y: number, id: EntityId, walkable = false): void {
   const t = tileAt(map, x, y)
-  if (t) t.occupantId = id
+  if (t) {
+    t.occupantId = id
+    t.occupantWalkable = walkable
+  }
 }
 
 export function clearOccupant(map: GameMap, x: number, y: number): void {
   const t = tileAt(map, x, y)
-  if (t) t.occupantId = null
+  if (t) {
+    t.occupantId = null
+    t.occupantWalkable = false
+  }
 }
 
 /** Tiles covered by a footprint anchored at top-left (x, y). */
@@ -146,7 +159,7 @@ export function generateMap(
 ): GameMap {
   const dim = mapDim(size, playerCount)
   const tiles: Tile[] = new Array(dim * dim)
-  for (let i = 0; i < tiles.length; i++) tiles[i] = { terrain: 'plain', occupantId: null }
+  for (let i = 0; i < tiles.length; i++) tiles[i] = { terrain: 'plain', occupantId: null, occupantWalkable: false }
 
   const map: GameMap = {
     width: dim,

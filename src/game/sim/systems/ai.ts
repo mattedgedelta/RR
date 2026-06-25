@@ -37,8 +37,9 @@ const RAID_SIZE = 6
  *  so surplus workers flow back to grain/ore instead of hoarding. */
 const GATHER_WEIGHT: Record<ResourceKind, number> = { grain: 4, ore: 1, helium3: 1, gold: 1 }
 const PLENTY = 500
-/** Build order up the caste pyramid; each gated by its own unlock age. */
-const BUILD_ORDER: BuildingKind[] = ['granary', 'legionHall', 'exchange', 'institute', 'kennel']
+/** Build order up the caste pyramid; each gated by its own unlock age. The Farm
+ *  (renewable grain) comes right after the Legion Hall to shore up food. */
+const BUILD_ORDER: BuildingKind[] = ['granary', 'legionHall', 'farm', 'exchange', 'institute', 'kennel']
 
 export function runAi(world: World): void {
   for (const p of world.players) {
