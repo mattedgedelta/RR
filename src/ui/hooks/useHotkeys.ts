@@ -17,7 +17,10 @@ function comboFromEvent(e: KeyboardEvent): string {
   if (e.ctrlKey || e.metaKey) parts.push('ctrl')
   if (e.altKey) parts.push('alt')
   if (e.shiftKey) parts.push('shift')
-  parts.push(e.key.toLowerCase())
+  // Normalise the number row via `code` — Shift turns `1` into `!`, which would
+  // otherwise break `shift+1` control-group bindings.
+  const digit = /^Digit(\d)$/.exec(e.code)
+  parts.push(digit ? digit[1] : e.key.toLowerCase())
   return parts.join('+')
 }
 

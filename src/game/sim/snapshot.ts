@@ -85,6 +85,8 @@ export interface Snapshot {
   idleCount: number
   /** Idle worker ids for player 0 (for IdleBadge cycle-select). */
   idleUnitIds: number[]
+  /** Idle military (non-worker) ids for player 0 (for the ',' cycle-select). */
+  idleMilitaryIds: number[]
   age: AgeId
   ageName: string
   ageIndex: number
@@ -114,6 +116,7 @@ export function emptySnapshot(): Snapshot {
     colorCounts: emptyColorCounts(),
     idleCount: 0,
     idleUnitIds: [],
+    idleMilitaryIds: [],
     age: 'bondsman',
     ageName: AGES.bondsman.name,
     ageIndex: AGES.bondsman.index,
@@ -285,6 +288,7 @@ export function buildSnapshot(world: World): Snapshot {
     colorCounts: humanColorCounts(world),
     idleCount: human.idleUnitIds.length,
     idleUnitIds: [...human.idleUnitIds],
+    idleMilitaryIds: humanIdleMilitary(world),
     age: human.age,
     ageName: AGES[human.age].name,
     ageIndex: AGES[human.age].index,
@@ -301,6 +305,15 @@ export function buildSnapshot(world: World): Snapshot {
 function emptyColorCounts(): Record<UnitKind, number> {
   const out = {} as Record<UnitKind, number>
   for (const k of Object.keys(UNITS) as UnitKind[]) out[k] = 0
+  return out
+}
+
+/** Idle non-worker (military/scout/medic) unit ids for the human. */
+function humanIdleMilitary(world: World): number[] {
+  const out: number[] = []
+  for (const u of world.units.values()) {
+    if (u.owner === 0 && u.order === 'idle' && !UNITS[u.kind].canGather) out.push(u.id)
+  }
   return out
 }
 
